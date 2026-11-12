@@ -110,6 +110,7 @@ class ReleaseFactsParityTest {
     private fun requireNative() {
         // The Gradle build sets this whenever the Rust core is enabled (-Pnuvio.rustCore, default true).
         assumeTrue("Rust core disabled for this build", System.getProperty("nuvio.core.hostLib") != null)
+        assertTrue("Rust core failed to load: ${NuvioCore.status}", NativeReleaseFacts.isAvailable)
     }
 
     companion object {

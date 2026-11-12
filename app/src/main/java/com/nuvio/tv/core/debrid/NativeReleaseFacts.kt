@@ -76,6 +76,8 @@ internal object NativeReleaseFacts {
     }
 
     fun classify(streams: List<Stream>): List<ReleaseTextFacts> {
+        // Also triggers the (lazy) library load and table check.
+        check(isAvailable) { "Rust core is unavailable: ${NuvioCore.status}" }
         val layout = IntArray(streams.size * LAYOUT_STRIDE)
         val strings = ArrayList<String?>(streams.size * 16)
         var languageCapacity = 0
