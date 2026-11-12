@@ -224,7 +224,7 @@ Most of the app is network-bound; heavy home/continue-watching work already runs
 2. **Signing:** hard-coded fallback passwords and debug builds signed with the release config. *Decision
    needed* on removing fallbacks (would break any workflow relying on them).
 3. **16 KB page size:** `libconscrypt_jni.so`, `libiamf.so` are 4 KB-aligned. Needs dependency updates.
-4. **`UnsatisfiedLinkError` from the torrent engine** is not caught by `catch (Exception)` paths (inferred).
+4. **`UnsatisfiedLinkError` from the torrent engine** was not caught by `catch (Exception)` paths. **Fixed:** `TorrentService.ensureEngine` now converts it to `IllegalStateException`, covered by `TorrentServiceNativeLoadFailureTest`.
 5. **No QuickJS memory/stack limits**; synchronous `fetch` serialises plugin I/O (inferred).
 6. **Engine shutdown on every player exit** (cold restarts) — behaviour choice, not changed.
 7. **Unknown:** NuvioEngine source repository/build reproducibility; libdovi build provenance; QuickJS

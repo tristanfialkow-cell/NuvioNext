@@ -51,6 +51,33 @@ Whether this is user-visible on devices is **unknown** until measured there.
   frame metrics are not worse (the library loads lazily on a background dispatcher, never at startup);
   (3) no `Rust core unavailable` warnings appear in logcat on supported ABIs.
 
+## Metadata core evaluation (Milestone 3)
+
+Brief step 3 asks whether metadata parsing/normalisation should move to Rust. `MetaMappingBenchmarkTest`
+(opt-in, `-Pnuvio.bench=true`) times Moshi decoding of a Cinemeta-shaped series response (configured as in
+`NetworkModule.provideMoshi`) separately from `MetaDto.toDomain()`, median of 41 runs after warm-up:
+
+| Episodes | JSON | Decode (Moshi) | Map, before | Map, after fix | Map without runtime strings |
+|---|---|---|---|---|---|
+| 10 | 8 KB | 38 µs | 8.8 µs | 5.0 µs | 1.8 µs |
+| 60 | 33 KB | 144 µs | 47 µs | 24 µs | 5.4 µs |
+| 250 | 128 KB | 563 µs | 195 µs | 101 µs | 19 µs |
+| 1 100 | 557 KB | 2 430 µs | 864 µs | 437 µs | 83 µs |
+
+Findings:
+- **About 90 % of mapping time was episode-runtime parsing**, which compiled two regexes per episode
+  (`parseEpisodeRuntimeMinutes` in `data/mapper/MetaMapper.kt`). Compiling them once halves mapping time
+  with identical results (pinned by `EpisodeRuntimeParsingTest`).
+- Decoding is 75–85 % of the remaining cost and is Moshi codegen over a network response. Moving it to Rust
+  would mean passing the whole JSON body across JNI and rebuilding the same Kotlin object graph from the
+  result. The brief rules out large JSON transfers across the boundary, and the rebuild would cost about as
+  much as what is left to save.
+- Meta requests run on `Dispatchers.IO` behind a network round trip of tens to hundreds of milliseconds.
+  Even the 1 100-episode case spends under 3 ms in CPU on this host.
+
+**Decision: no Rust metadata core.** Keep metadata in Kotlin with the regex fix. Revisit only if
+device profiling shows meta decoding on a critical path, for example detail-page open time on a TV.
+
 ## Device benchmark plan
 
 1. Build `benchmark` twice (with and without `-Pnuvio.rustReleaseFacts=true`) and run
