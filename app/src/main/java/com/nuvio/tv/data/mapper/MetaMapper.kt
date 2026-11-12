@@ -95,10 +95,14 @@ fun MetaLinkDto.toDomain(): MetaLink? {
     }
 }
 
+// Compiled once: this runs per episode, and long series have 1000+ episodes.
+private val runtimeHoursRegex = Regex("(\\d+)\\s*h")
+private val runtimeMinutesRegex = Regex("(\\d+)\\s*m(?:in)?")
+
 private fun parseEpisodeRuntimeMinutes(runtime: String?): Int? {
     val normalized = runtime?.trim()?.lowercase()?.takeIf { it.isNotBlank() } ?: return null
-    val hourMatch = "(\\d+)\\s*h".toRegex().find(normalized)
-    val minuteMatch = "(\\d+)\\s*m(?:in)?".toRegex().find(normalized)
+    val hourMatch = runtimeHoursRegex.find(normalized)
+    val minuteMatch = runtimeMinutesRegex.find(normalized)
     val hours = hourMatch?.groupValues?.getOrNull(1)?.toIntOrNull()
     val minutes = minuteMatch?.groupValues?.getOrNull(1)?.toIntOrNull()
     if (hours != null || minutes != null) {

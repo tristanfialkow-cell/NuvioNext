@@ -224,17 +224,25 @@ Most of the app is network-bound; heavy home/continue-watching work already runs
 2. **Signing:** hard-coded fallback passwords and debug builds signed with the release config. *Decision
    needed* on removing fallbacks (would break any workflow relying on them).
 3. **16 KB page size:** `libconscrypt_jni.so`, `libiamf.so` are 4 KB-aligned. Needs dependency updates.
-4. **`UnsatisfiedLinkError` from the torrent engine** is not caught by `catch (Exception)` paths (inferred).
+4. **`UnsatisfiedLinkError` from the torrent engine** was not caught by `catch (Exception)` paths. **Fixed:** `TorrentService.ensureEngine` now converts it to `IllegalStateException`, covered by `TorrentServiceNativeLoadFailureTest`.
 5. **No QuickJS memory/stack limits**; synchronous `fetch` serialises plugin I/O (inferred).
 6. **Engine shutdown on every player exit** (cold restarts) — behaviour choice, not changed.
 7. **Unknown:** NuvioEngine source repository/build reproducibility; libdovi build provenance; QuickJS
    fork source; HTTP port of the engine's loopback server.
-8. **Upstream sync:** fork history is a single squashed commit (`546c9d1`), so upstream merges will need
-   care (`upstream` remote not configured here).
+8. **Upstream sync (verified, corrected):** the fork's first commit (`546c9d1`) sits directly on upstream
+   `NuvioMedia/NuvioTV` `dev` (`11689894f`, merge of PR #4598), so upstream changes can be merged normally.
+   An `upstream` remote is not configured in this workspace.
 9. **CI coverage is minimal** (three test files); broader unit-test runs are a cheap win.
 10. **Brief vs. instructions:** the brief asks for a read-only audit and no direct pushes to `dev`; the
     owner's task asked for implementation. Work was delivered on `feature/nuvio-next-rust-core` with a PR
     into `dev` (the platform also blocks direct pushes to the default branch).
+11. **Pre-existing test failures (verified, identical on upstream `dev`):** `TraktAuthServiceTest` needs
+    Trakt client credentials in `local.properties` and now skips without them.
+    `SearchViewModelSuggestionsTest` › "clearing the field retires the suggestions and the submitted
+    query" contradicts `SearchViewModel.onQueryChanged`'s recomposition-artifact heuristic. That
+    heuristic keeps suggestions when the query drops from the last non-empty value to empty. Which
+    behaviour is right on TV hardware is a product decision; it is left unchanged. The wall-clock
+    assertion in `TrackingPlaybackScenariosTest` scenario 5 (< 20 ms) can flake under CPU load.
 
 ## 10. Minimal Phase 1 plan (implemented on `feature/nuvio-next-rust-core`)
 

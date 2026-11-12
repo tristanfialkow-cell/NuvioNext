@@ -40,6 +40,7 @@ class TorrentService @Inject constructor(
         private const val TAG = "TorrentService"
         private const val SAMPLE_INTERVAL_MS = 1_000L
         private const val STATS_INTERVAL_MS = 250L
+        internal const val ENGINE_UNAVAILABLE_MESSAGE = "Torrent engine is unavailable on this device"
     }
 
     private data class EngineConfigurationKey(
@@ -324,15 +325,20 @@ class TorrentService @Inject constructor(
             "Could not create the Nuvio Engine cache directory"
         }
         migrateNestedPayloadDirectory(cacheDirectory)
-        return NuvioEngine.create(
-            buildTorrentEngineConfig(
-                stateDirectory = stateDirectory,
-                cacheDirectory = cacheDirectory,
-                uploadEnabled = configurationKey.uploadEnabled,
-                torrentProfile = configurationKey.torrentProfile,
-                diskCacheCapacityBytes = configurationKey.diskCacheCapacityBytes
-            )
-        ).also { created ->
+        val config = buildTorrentEngineConfig(
+            stateDirectory = stateDirectory,
+            cacheDirectory = cacheDirectory,
+            uploadEnabled = configurationKey.uploadEnabled,
+            torrentProfile = configurationKey.torrentProfile,
+            diskCacheCapacityBytes = configurationKey.diskCacheCapacityBytes
+        )
+        val created = try {
+            NuvioEngine.create(config)
+        } catch (error: LinkageError) {
+            // A missing or unloadable libnuvio_engine.so throws an Error; callers only handle Exceptions.
+            throw IllegalStateException(ENGINE_UNAVAILABLE_MESSAGE, error)
+        }
+        return created.also {
             engine = created
             engineConfigurationKey = configurationKey
             observeEngineEvents(created)
