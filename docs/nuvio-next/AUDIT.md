@@ -249,6 +249,10 @@ filter.
     heuristic keeps suggestions when the query drops from the last non-empty value to empty. Which
     behaviour is right on TV hardware is a product decision; it is left unchanged. The wall-clock
     assertion in `TrackingPlaybackScenariosTest` scenario 5 (< 20 ms) can flake under CPU load.
+    `TraktProgressServiceFailureTest` (real-time waits with 15 s timeouts) is intermittent on
+    unmodified `dev` (`b8b0e66`): 2 of 6 isolated runs timed out, once in each test method.
+    `ParallelRangeChunkLeaseTest` › "releasing a buffer nobody reads…" fails occasionally under full-suite
+    load and passed 3 of 3 isolated runs.
 
 ## 10. Minimal Phase 1 plan (implemented on `feature/nuvio-next-rust-core`)
 
