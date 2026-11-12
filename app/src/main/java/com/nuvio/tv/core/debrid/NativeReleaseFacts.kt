@@ -78,6 +78,22 @@ internal object NativeReleaseFacts {
     fun classify(streams: List<Stream>): List<ReleaseTextFacts> {
         // Also triggers the (lazy) library load and table check.
         check(isAvailable) { "Rust core is unavailable: ${NuvioCore.status}" }
+        val batch = encode(streams)
+        call(batch)
+        return decode(batch)
+    }
+
+    /** A batch in the wire format, with its output buffers. Split out so each phase can be timed. */
+    internal class Batch(
+        val size: Int,
+        val layout: IntArray,
+        val strings: Array<String?>,
+        val out: IntArray,
+        val languagesOut: IntArray,
+        val groups: Array<String?>
+    )
+
+    internal fun encode(streams: List<Stream>): Batch {
         val layout = IntArray(streams.size * LAYOUT_STRIDE)
         val strings = ArrayList<String?>(streams.size * 16)
         var languageCapacity = 0
@@ -106,14 +122,26 @@ internal object NativeReleaseFacts {
             parsed?.languages?.let { strings += it }
             languageCapacity += maxOf(parsed?.languages?.size ?: 0, languages.size)
         }
+        return Batch(
+            size = streams.size,
+            layout = layout,
+            strings = strings.toTypedArray(),
+            out = IntArray(streams.size * OUT_STRIDE),
+            languagesOut = IntArray(languageCapacity),
+            groups = arrayOfNulls(streams.size)
+        )
+    }
 
-        val out = IntArray(streams.size * OUT_STRIDE)
-        val languagesOut = IntArray(languageCapacity)
-        val groups = arrayOfNulls<String>(streams.size)
-        val count = NuvioCoreNative.nativeClassifyReleases(layout, strings.toTypedArray(), out, languagesOut, groups)
-        check(count == streams.size) { "Native classifier returned $count of ${streams.size}" }
+    internal fun call(batch: Batch) {
+        val count = NuvioCoreNative.nativeClassifyReleases(
+            batch.layout, batch.strings, batch.out, batch.languagesOut, batch.groups
+        )
+        check(count == batch.size) { "Native classifier returned $count of ${batch.size}" }
+    }
 
-        return List(streams.size) { index ->
+    internal fun decode(batch: Batch): List<ReleaseTextFacts> {
+        val out = batch.out
+        return List(batch.size) { index ->
             val base = index * OUT_STRIDE
             val languageStart = out[base + 6]
             ReleaseTextFacts(
@@ -123,8 +151,8 @@ internal object NativeReleaseFacts {
                 audioTags = fromMask(out[base + 3], audioOrder, DebridStreamAudioTag.UNKNOWN),
                 audioChannels = fromMask(out[base + 4], channelOrder, DebridStreamAudioChannel.UNKNOWN),
                 encode = encodes[out[base + 5]],
-                languages = List(out[base + 7]) { languages[languagesOut[languageStart + it]] },
-                releaseGroup = groups[index].orEmpty()
+                languages = List(out[base + 7]) { languages[batch.languagesOut[languageStart + it]] },
+                releaseGroup = batch.groups[index].orEmpty()
             )
         }
     }
