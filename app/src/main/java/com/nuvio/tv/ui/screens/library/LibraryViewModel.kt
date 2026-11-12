@@ -54,8 +54,6 @@ import com.nuvio.tv.R
 import java.util.Locale
 import javax.inject.Inject
 
-private val YEAR_REGEX = Regex("""\b(19|20)\d{2}\b""")
-
 data class LibraryTypeTab(
     val key: String,
     val label: String
@@ -902,154 +900,46 @@ class LibraryViewModel @Inject constructor(
             .ifBlank { context.getString(R.string.type_unknown) }
     }
 
-    private fun LibraryEntry.extractYear(): String? =
-        releaseInfo?.let { YEAR_REGEX.find(it)?.value }
+    // Rebuilt only when the library snapshot changes; filter and sort changes reuse it.
+    @Volatile
+    private var libraryIndex: LibraryGridIndex? = null
+
+    private fun indexFor(items: List<LibraryEntry>): LibraryGridIndex =
+        libraryIndex?.takeIf { it.entries === items } ?: LibraryGridIndex(items).also { libraryIndex = it }
 
     private fun LibraryUiState.withVisibleItems(): LibraryUiState {
-        val listFiltered = if (sourceMode.providerId != null) {
-            val listKey = selectedListKey ?: ""
-            allItems.filter { entry -> entry.listKeys.contains(listKey) }
-        } else {
-            allItems
-        }
-
-        // Step 2: Type filter
-        val selectedTypeKey = selectedTypeTab?.key
-        val typeFiltered = listFiltered.filter { entry ->
-            selectedTypeKey == null ||
-                selectedTypeKey == LibraryTypeTab.ALL_KEY ||
-                (entry.mediaCategory ?: entry.type).trim().lowercase(Locale.ROOT) == selectedTypeKey
-        }
-
-        // Step 3: Genre filter
-        val genreFiltered = if (selectedGenre != null) {
-            typeFiltered.filter { entry ->
-                entry.genres.any { it.equals(selectedGenre, ignoreCase = true) }
-            }
-        } else {
-            typeFiltered
-        }
-
-        // Step 4: Year filter
-        val yearFiltered = if (selectedYear != null) {
-            genreFiltered.filter { entry -> entry.extractYear() == selectedYear }
-        } else {
-            genreFiltered
-        }
-
-        // Step 5: Watched status filter
-        val watchedFiltered = when (selectedWatchedFilter) {
-            LibraryWatchedFilter.ALL -> yearFiltered
-            LibraryWatchedFilter.WATCHED -> yearFiltered.filter { entry ->
-                val isMovie = entry.type.equals("movie", ignoreCase = true)
-                if (isMovie) watchedMovieIds.contains(entry.id)
-                else watchedSeriesIds.contains(entry.id)
-            }
-            LibraryWatchedFilter.UNWATCHED -> yearFiltered.filter { entry ->
-                val isMovie = entry.type.equals("movie", ignoreCase = true)
-                if (isMovie) !watchedMovieIds.contains(entry.id)
-                else !watchedSeriesIds.contains(entry.id)
-            }
-        }
-
-        // Faceted counts — each filter counts items matching all OTHER active filters
-
-        // Genre counts: from typeFiltered (after list+type), applying year filter but NOT genre filter
-        val itemsForGenreCounts = if (selectedYear != null) {
-            typeFiltered.filter { it.extractYear() == selectedYear }
-        } else {
-            typeFiltered
-        }
-        val genreCounts = mutableMapOf<String, Int>()
-        itemsForGenreCounts.forEach { entry ->
-            entry.genres.forEach { genre ->
-                val normalized = genre.trim()
-                if (normalized.isNotBlank()) {
-                    genreCounts[normalized] = (genreCounts[normalized] ?: 0) + 1
+        val result = indexFor(allItems).query(
+            LibraryQuerySpec(
+                filterByList = sourceMode.providerId != null,
+                selectedListKey = selectedListKey,
+                selectedTypeKey = selectedTypeTab?.key,
+                selectedGenre = selectedGenre,
+                selectedYear = selectedYear,
+                watchedFilter = selectedWatchedFilter,
+                watchedMovieIds = watchedMovieIds,
+                watchedSeriesIds = watchedSeriesIds,
+                sortOption = selectedSortOption,
+                providerOrder = providerSortOrder?.takeIf {
+                    it.source == sourceMode && it.listKey == selectedListKey && it.sortOption == selectedSortOption
                 }
-            }
+            )
+        )
+        val genreOptions = result.genreCounts.map { (genre, count) -> FilterOption(key = genre, label = genre, count = count) }
+        val yearOptions = result.yearCounts.map { (year, count) -> FilterOption(key = year, label = year, count = count) }
+        val allTab = LibraryTypeTab(
+            key = LibraryTypeTab.ALL_KEY,
+            label = "${context.getString(R.string.library_type_all)} (${result.typeCountTotal})"
+        )
+        val typeTabsWithCounts = listOf(allTab) + result.typeKeys.map { key ->
+            LibraryTypeTab(key = key, label = "${prettifyTypeLabel(key)} (${result.typeCounts[key] ?: 0})")
         }
-        val genreOptions = genreCounts.entries
-            .sortedBy { it.key.lowercase(Locale.ROOT) }
-            .map { (genre, count) -> FilterOption(key = genre, label = genre, count = count) }
-
-        // Year counts: from typeFiltered (after list+type), applying genre filter but NOT year filter
-        val itemsForYearCounts = if (selectedGenre != null) {
-            typeFiltered.filter { entry ->
-                entry.genres.any { it.equals(selectedGenre, ignoreCase = true) }
-            }
-        } else {
-            typeFiltered
-        }
-        val yearCounts = mutableMapOf<String, Int>()
-        itemsForYearCounts.forEach { entry ->
-            val year = entry.extractYear() ?: return@forEach
-            yearCounts[year] = (yearCounts[year] ?: 0) + 1
-        }
-        val yearOptions = yearCounts.entries
-            .sortedByDescending { it.key }
-            .map { (year, count) -> FilterOption(key = year, label = year, count = count) }
-
-        // Type tab counts: from listFiltered, applying genre+year filters
-        val itemsForTypeCounts = listFiltered.filter { entry ->
-            val genreMatch = selectedGenre == null || entry.genres.any { it.equals(selectedGenre, ignoreCase = true) }
-            val yearMatch = selectedYear == null || entry.extractYear() == selectedYear
-            genreMatch && yearMatch
-        }
-
-        // Step 6: Sort
-        val providerOrder = providerSortOrder?.takeIf {
-            it.source == sourceMode && it.listKey == selectedListKey && it.sortOption == selectedSortOption
-        }?.comparator()
-        val sorted = when (selectedSortOption) {
-            LibrarySortOption.DEFAULT -> when {
-                sourceMode.providerId != null -> watchedFiltered.sortedWith(
-                    compareBy<LibraryEntry> { it.listRanks[selectedListKey] ?: it.traktRank ?: Int.MAX_VALUE }
-                        .thenByDescending { it.listedAt }
-                        .thenBy(String.CASE_INSENSITIVE_ORDER) { it.name.ifBlank { it.id } }
-                        .thenBy { it.id }
-                )
-                else -> watchedFiltered
-            }
-            LibrarySortOption.ADDED_DESC -> watchedFiltered.sortedWith(
-                providerOrder ?: compareByDescending<LibraryEntry> { it.listedAt }
-                    .thenBy(String.CASE_INSENSITIVE_ORDER) { it.name.ifBlank { it.id } }
-                    .thenBy { it.id }
-            )
-            LibrarySortOption.ADDED_ASC -> watchedFiltered.sortedWith(
-                providerOrder ?: compareBy<LibraryEntry> { it.listedAt }
-                    .thenBy(String.CASE_INSENSITIVE_ORDER) { it.name.ifBlank { it.id } }
-                    .thenBy { it.id }
-            )
-            LibrarySortOption.RELEASED_DESC -> watchedFiltered.sortedWith(
-                providerOrder ?: compareByDescending<LibraryEntry> { it.extractYear() }
-                    .thenBy(String.CASE_INSENSITIVE_ORDER) { it.name.ifBlank { it.id } }
-                    .thenBy { it.id }
-            )
-            LibrarySortOption.RELEASED_ASC -> watchedFiltered.sortedWith(
-                providerOrder ?: compareBy<LibraryEntry, String?>(nullsLast()) { it.extractYear() }
-                    .thenBy(String.CASE_INSENSITIVE_ORDER) { it.name.ifBlank { it.id } }
-                    .thenBy { it.id }
-            )
-            LibrarySortOption.TITLE_ASC -> watchedFiltered.sortedWith(
-                compareBy<LibraryEntry> { titleSortKey(it.name.ifBlank { it.id }) }
-                    .thenBy { it.id }
-            )
-            LibrarySortOption.TITLE_DESC -> watchedFiltered.sortedWith(
-                compareByDescending<LibraryEntry> { titleSortKey(it.name.ifBlank { it.id }) }
-                    .thenBy { it.id }
-            )
-        }
-
-        // Rebuild type tabs with counts
-        val typeTabsWithCounts = buildTypeTabsWithCounts(listFiltered, itemsForTypeCounts)
 
         // Validate selections — clear if no longer valid
         val validGenre = selectedGenre?.takeIf { g -> genreOptions.any { it.key.equals(g, ignoreCase = true) } }
         val validYear = selectedYear?.takeIf { y -> yearOptions.any { it.key == y } }
 
         return copy(
-            visibleItems = sorted.withCustomPosterUrls(
+            visibleItems = result.items.withCustomPosterUrls(
                 com.nuvio.tv.core.poster.patternForScreen(customPosterUrlPattern, com.nuvio.tv.core.poster.CustomPosterScreen.LIBRARY, customPosterEnabledScreens)
             ),
             availableTypeTabs = typeTabsWithCounts,
@@ -1108,43 +998,4 @@ class LibraryViewModel @Inject constructor(
             CloudLibraryItemType.WebDownload -> context.getString(R.string.cloud_library_type_web)
             CloudLibraryItemType.File -> context.getString(R.string.cloud_library_type_files)
         }
-
-    private fun buildTypeTabsWithCounts(
-        allTypeItems: List<LibraryEntry>,
-        filteredItems: List<LibraryEntry>
-    ): List<LibraryTypeTab> {
-        val byKey = linkedMapOf<String, String>()
-        allTypeItems.forEach { entry ->
-            // Use mediaCategory (e.g. "anime") as the display type when present,
-            // so anime shows as a separate filter from movies/series.
-            val key = (entry.mediaCategory ?: entry.type).trim().ifBlank { "unknown" }.lowercase(Locale.ROOT)
-            if (!byKey.containsKey(key)) {
-                byKey[key] = prettifyTypeLabel(key)
-            }
-        }
-        val countByType = mutableMapOf<String, Int>()
-        filteredItems.forEach { entry ->
-            val key = (entry.mediaCategory ?: entry.type).trim().ifBlank { "unknown" }.lowercase(Locale.ROOT)
-            countByType[key] = (countByType[key] ?: 0) + 1
-        }
-        val allCount = filteredItems.size
-        val allTab = LibraryTypeTab(key = LibraryTypeTab.ALL_KEY, label = "${context.getString(R.string.library_type_all)} ($allCount)")
-        // Stable order: movies, series/tv/show, anime, then anything else alphabetically.
-        val typeOrder = listOf("movie", "series", "tv", "show", "anime")
-        val sortedKeys = byKey.keys.sortedWith(compareBy { key ->
-            val idx = typeOrder.indexOf(key)
-            if (idx >= 0) idx else typeOrder.size
-        })
-        return listOf(allTab) + sortedKeys.map { key ->
-            LibraryTypeTab(key = key, label = "${byKey[key]} (${countByType[key] ?: 0})")
-        }
-    }
 }
-
-// Strip leading English articles ("The", "A", "An") when sorting by title, so
-// "The Walking Dead" sorts under W and not T. Matches how streaming services
-// and most media libraries order titles alphabetically.
-private val LEADING_ARTICLE_REGEX = Regex("^(the|an|a)\\s+", RegexOption.IGNORE_CASE)
-
-private fun titleSortKey(title: String): String =
-    title.trim().replace(LEADING_ARTICLE_REGEX, "").lowercase(Locale.ROOT)

@@ -113,8 +113,6 @@ class SearchViewModel @Inject constructor(
         const val LIVE_SEARCH_DEBOUNCE_MS = 350L
 
         const val MAX_SUGGESTIONS = 8
-        /** Splits titles and queries into words. */
-        private val WORD_SEPARATOR = Regex("[^\\p{L}\\p{N}]+")
         const val MAX_RECENT_SEARCHES = 8
     }
 
@@ -324,53 +322,11 @@ class SearchViewModel @Inject constructor(
         fetchSuggestions(trimmed)
     }
 
-    /** Match rank for [title], lower being better, or null when it does not match [queryLower]. */
-    private fun suggestionRank(title: String, queryLower: String): Int? {
-        val titleLower = title.lowercase()
-        if (titleLower == queryLower) return 0
-        if (titleLower.startsWith(queryLower)) return 1
-        if (titleLower.contains(queryLower)) return 2
-
-        // Allow multi-word matches such as "wolf wall" -> "The Wolf of Wall Street".
-        // Each query word must consume a different title word.
-        val queryWords = queryLower.split(WORD_SEPARATOR).filter { it.isNotEmpty() }
-        if (queryWords.size < 2) return null
-        val unmatchedTitleWords = titleLower.split(WORD_SEPARATOR).filterTo(mutableListOf()) { it.isNotEmpty() }
-        val everyWordMatches = queryWords.all { word ->
-            val index = unmatchedTitleWords.indexOfFirst { it.startsWith(word) }
-            if (index >= 0) unmatchedTitleWords.removeAt(index)
-            index >= 0
-        }
-        return if (everyWordMatches) 3 else null
-    }
-
-    /**
-     * The strip contents for [names], best match first, capped at [MAX_SUGGESTIONS].
-     *
-     * Titles of the same rank keep the order of [names], which is the addon's own relevance order.
-     * Sorting them alphabetically put five titles ahead of "Jurassic Park" for "juras", and of
-     * "Slow Horses" for "slo", past the few completions a TV keyboard shows.
-     */
     private fun rankedSuggestions(names: Collection<String>, queryLower: String): List<String> =
-        names
-            .mapNotNull { name -> suggestionRank(name, queryLower)?.let { name to it } }
-            .sortedBy { it.second }
-            .map { it.first }
-            .take(MAX_SUGGESTIONS)
+        SearchSuggestions.ranked(names, queryLower, MAX_SUGGESTIONS)
 
-    /**
-     * Every catalog's titles, taken one position at a time: each catalog's first title, then each
-     * one's second, and so on, in catalog order. Each catalog's best matches lead, and the result
-     * does not depend on which catalog happened to answer first.
-     */
-    private fun mergedCatalogNames(namesByCatalog: Map<Int, List<String>>, catalogCount: Int): List<String> {
-        val catalogs = (0 until catalogCount).mapNotNull { namesByCatalog[it] }
-        val merged = LinkedHashSet<String>()
-        for (position in 0 until (catalogs.maxOfOrNull { it.size } ?: 0)) {
-            catalogs.forEach { names -> names.getOrNull(position)?.let(merged::add) }
-        }
-        return merged.toList()
-    }
+    private fun mergedCatalogNames(namesByCatalog: Map<Int, List<String>>, catalogCount: Int): List<String> =
+        SearchSuggestions.mergedCatalogNames(namesByCatalog, catalogCount)
 
     private fun fetchSuggestions(query: String) {
         suggestionJob?.cancel()

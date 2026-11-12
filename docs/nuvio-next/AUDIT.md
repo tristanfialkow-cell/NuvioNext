@@ -203,6 +203,12 @@ Most of the app is network-bound; heavy home/continue-watching work already runs
 7. **Search suggestion ranking**: not CPU-bound.
 8. **Watch-progress merges**: entangled with DataStore/sync; high cost/risk.
 
+**Update (Milestone 4).** The library grid query (`LibraryViewModel.withVisibleItems`) was missing
+from this list. It turned out to be the largest CPU cost measured so far: 6–58 ms per filter or sort
+press for libraries of 2 000–10 000 entries, on the main thread. It is resolved in Kotlin by
+`LibraryGridIndex`. Rust was evaluated by ceiling analysis and rejected; see `PERFORMANCE.md` §Search and
+filter.
+
 ## 8. Performance baseline and benchmark plan
 
 - **Existing infrastructure (verified):** `baselineprofile/` `NuvioStartupBenchmark` (cold start,
@@ -243,6 +249,10 @@ Most of the app is network-bound; heavy home/continue-watching work already runs
     heuristic keeps suggestions when the query drops from the last non-empty value to empty. Which
     behaviour is right on TV hardware is a product decision; it is left unchanged. The wall-clock
     assertion in `TrackingPlaybackScenariosTest` scenario 5 (< 20 ms) can flake under CPU load.
+    `TraktProgressServiceFailureTest` (real-time waits with 15 s timeouts) is intermittent on
+    unmodified `dev` (`b8b0e66`): 2 of 6 isolated runs timed out, once in each test method.
+    `ParallelRangeChunkLeaseTest` › "releasing a buffer nobody reads…" fails occasionally under full-suite
+    load and passed 3 of 3 isolated runs.
 
 ## 10. Minimal Phase 1 plan (implemented on `feature/nuvio-next-rust-core`)
 
