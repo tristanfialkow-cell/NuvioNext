@@ -3,12 +3,12 @@ package com.nuvio.tv.core.debrid
 import com.google.gson.GsonBuilder
 import com.google.gson.JsonArray
 import com.google.gson.JsonObject
+import com.nuvio.tv.core.debrid.ProviderStreamFixtures.Kind
 import com.nuvio.tv.data.local.DebridSettingsDataStore
 import com.nuvio.tv.data.local.StreamBadgeSettingsDataStore
 import com.nuvio.tv.domain.model.AddonStreams
 import com.nuvio.tv.domain.model.DebridSettings
 import com.nuvio.tv.domain.model.Stream
-import com.nuvio.tv.domain.model.StreamClientResolveRaw
 import io.mockk.mockk
 import java.io.File
 import kotlin.random.Random
@@ -21,9 +21,15 @@ import org.junit.Test
  * runs on the merged list of an addon on every arrival. Run with
  * `./gradlew :app:testFullDebugUnitTest --tests '*ProviderProcessingBenchmarkTest' -Pnuvio.bench=true`.
  *
- * Also writes the generated streams to `rust/target/bench/provider_streams_<n>.json` so
- * `cargo test --release -p nuvio-core --test bench -- --ignored --nocapture` can time pure Rust
- * classification of exactly the same inputs (the JNI-free lower bound).
+ * Every timed stage returns a checksum that must equal a value derived from the fixture tags or
+ * from the Kotlin reference, on every call, so a stage that stops doing its work fails the run
+ * instead of reporting a fast time. `ProviderProcessingPipelineTest` pins the output itself.
+ *
+ * Also writes the classified streams and their Kotlin facts to
+ * `rust/target/bench/provider_streams_<n>.json` so
+ * `cargo test --release -p nuvio-core --test bench -- --ignored --nocapture` can check and time
+ * pure Rust classification of exactly the same inputs (the JNI-free lower bound).
+ * Results go to stdout and `app/build/reports/nuvio-bench/provider_processing.csv`.
  */
 class ProviderProcessingBenchmarkTest {
     private val formatter = DebridStreamFormatter(DebridStreamTemplateEngine())
@@ -32,7 +38,6 @@ class ProviderProcessingBenchmarkTest {
         streamBadgeSettingsDataStore = mockk<StreamBadgeSettingsDataStore>(relaxed = true),
         formatter = formatter
     )
-    private val settings = DebridSettings(enabled = true, torboxApiKey = "key")
     // java.lang.management is not on the android.jar compile classpath; the host JVM has it.
     private val allocatedBytes: (Long) -> Long = run {
         val bean = Class.forName("java.lang.management.ManagementFactory").getMethod("getThreadMXBean").invoke(null)
@@ -40,8 +45,12 @@ class ProviderProcessingBenchmarkTest {
         val read: (Long) -> Long = { thread -> method.invoke(bean, thread) as Long }
         read
     }
+    private val lines = mutableListOf<String>()
 
-    private data class Stat(val median: Double, val p10: Double, val p90: Double, val bytes: Double)
+    private fun emit(line: String) {
+        println(line)
+        lines += line
+    }
 
     @Test
     fun `benchmark debrid presentation phases`() {
@@ -49,160 +58,165 @@ class ProviderProcessingBenchmarkTest {
         val previous = ReleaseFactsClassifier.nativeEnabled
         try {
             // Cold: first use in this JVM, before any warm-up.
-            val coldStreams = ProviderStreamFixtures.addonStreams(150, Random(1))
-            val coldGroup = listOf(AddonStreams(addonName = "Torrentio", addonLogo = null, streams = coldStreams))
+            val cold = ProviderStreamFixtures.addonStreams(150, Random(1))
+            val coldGroup = group(cold.map { it.stream })
+            val coldExpected = cold.count { it.kind.presented }
             ReleaseFactsClassifier.nativeEnabled = false
-            val coldKotlin = once { presentation.apply(coldGroup, settings, includeBadgeMatches = false).single().streams.size }
-            val coldLoad = once { if (System.getProperty("nuvio.core.hostLib") != null && NativeReleaseFacts.isAvailable) 1 else 0 }
+            val coldKotlin = once(coldExpected) { applyCount(coldGroup, ProviderStreamFixtures.defaultSettings) }
+            val coldLoad = once(null) { if (System.getProperty("nuvio.core.hostLib") != null && NativeReleaseFacts.isAvailable) 1 else 0 }
             val native = System.getProperty("nuvio.core.hostLib") != null && NativeReleaseFacts.isAvailable
-            val coldRust = if (native) once { NativeReleaseFacts.classify(coldStreams).size } else Double.NaN
-            println("cold_ms,kotlin_apply_150=%.1f,rust_load_and_handshake=%.1f,rust_first_classify_150=%.1f"
+            val coldRust = if (native) once(cold.size) { NativeReleaseFacts.classify(cold.map { it.stream }).size } else Double.NaN
+            emit("cold_ms,kotlin_apply_150=%.1f,rust_load_and_handshake=%.1f,rust_first_classify_150=%.1f"
                 .format(coldKotlin / 1e6, coldLoad / 1e6, coldRust / 1e6))
 
-            println("streams,stage,median_us,p10_us,p90_us,alloc_kb")
+            emit("streams,stage,in,out,p50_us,p90_us,p99_us,min_us,max_us,round_p50_min_us,round_p50_max_us,alloc_kb")
             for (size in listOf(50, 150, 400)) {
-                val streams = ProviderStreamFixtures.addonStreams(size, Random(size))
-                dumpForRust(size, streams)
-                val group = listOf(AddonStreams(addonName = "Torrentio", addonLogo = null, streams = streams))
-                val facts = ReleaseFactsClassifier.classifyAll(streams)
-                val withFacts = DirectDebridStreamFilter.applyPreferencesWithFacts(streams, settings)
-                check(facts.size == size)
+                val tagged = ProviderStreamFixtures.addonStreams(size, Random(size))
+                val all = tagged.map { it.stream }
+                // What the presentation step classifies: the cached, managed debrid streams.
+                val managed = tagged.filter { it.kind.managed }.map { it.stream }
+                val presented = tagged.count { it.kind.presented }
+                check(managed.size >= size * 3 / 4) { "fixtures: only ${managed.size} of $size streams are classified" }
+                val group = group(all)
 
-                fun row(stage: String, block: () -> Int) {
-                    val s = measure(block)
-                    println("%d,%s,%.1f,%.1f,%.1f,%.1f".format(size, stage, s.median / 1e3, s.p10 / 1e3, s.p90 / 1e3, s.bytes / 1024))
+                val kotlinFacts = managed.map(ReleaseFactsClassifier::classifyKotlin)
+                val factsChecksum = kotlinFacts.sumOf(::checksum)
+                check(kotlinFacts.count { it.resolution.value > 0 } >= managed.size * 8 / 10) { "fixtures: resolutions not recognised" }
+                dumpForRust(size, managed, kotlinFacts)
+
+                fun row(stage: String, input: Int, expected: Int, block: () -> Int) {
+                    check(expected > 0) { "$stage: expected checksum must be positive" }
+                    val s = measure(expected, block)
+                    emit("%d,%s,%d,%d,%.1f,%.1f,%.1f,%.1f,%.1f,%.1f,%.1f,%.1f".format(
+                        size, stage, input, expected, s.p50 / 1e3, s.p90 / 1e3, s.p99 / 1e3, s.min / 1e3, s.max / 1e3,
+                        s.roundP50Min / 1e3, s.roundP50Max / 1e3, s.bytes / 1024))
                 }
 
-                row("classify_kotlin") { streams.count { ReleaseFactsClassifier.classifyKotlin(it).encode.ordinal >= 0 } }
                 ReleaseFactsClassifier.nativeEnabled = false
-                row("filter_sort_limit_incl_classify_kotlin") { DirectDebridStreamFilter.applyPreferencesWithFacts(streams, settings).size }
-                row("format") { withFacts.count { (stream, f) -> formatter.format(stream, settings, emptyList(), f).name != null } }
-                row("apply_end_to_end_kotlin") { presentation.apply(group, settings, includeBadgeMatches = false).single().streams.size }
+                row("classify_kotlin", managed.size, factsChecksum) { managed.sumOf { checksum(ReleaseFactsClassifier.classifyKotlin(it)) } }
                 if (native) {
-                    row("classify_rust_total") { NativeReleaseFacts.classify(streams).size }
-                    row("rust_encode") { NativeReleaseFacts.encode(streams).size }
-                    val batch = NativeReleaseFacts.encode(streams)
-                    row("rust_native_call") { NativeReleaseFacts.call(batch); batch.size }
-                    row("rust_decode") { NativeReleaseFacts.decode(batch).size }
-                    ReleaseFactsClassifier.nativeEnabled = true
-                    row("filter_sort_limit_incl_classify_rust") { DirectDebridStreamFilter.applyPreferencesWithFacts(streams, settings).size }
-                    row("apply_end_to_end_rust") { presentation.apply(group, settings, includeBadgeMatches = false).single().streams.size }
-                    ReleaseFactsClassifier.nativeEnabled = false
+                    check(NativeReleaseFacts.classify(managed) == kotlinFacts) { "Rust facts differ from Kotlin" }
+                    row("classify_rust_jni_total", managed.size, factsChecksum) { NativeReleaseFacts.classify(managed).sumOf(::checksum) }
+                    row("jni_encode", managed.size, managed.size) { NativeReleaseFacts.encode(managed).size }
+                    val batch = NativeReleaseFacts.encode(managed)
+                    row("jni_native_call", managed.size, managed.size) { NativeReleaseFacts.call(batch); batch.size }
+                    row("jni_decode", managed.size, factsChecksum) { NativeReleaseFacts.decode(batch).sumOf(::checksum) }
+                }
+
+                for ((label, settings) in listOf("default" to ProviderStreamFixtures.defaultSettings, "custom" to ProviderStreamFixtures.customSettings)) {
+                    val withFacts = DirectDebridStreamFilter.applyPreferencesWithFacts(managed, settings, kotlinFacts)
+                    val reference = presentation.apply(group, settings, includeBadgeMatches = false).single().streams
+                    val passthrough = tagged.count { it.kind == Kind.PASSTHROUGH }
+                    check(reference.size == withFacts.size + passthrough) { "$label: ${reference.size} presented, ${withFacts.size} filtered" }
+                    if (label == "default") check(reference.size == presented) { "default: ${reference.size} of $presented presented" }
+                    check(withFacts.size >= 10) { "$label: only ${withFacts.size} streams survive filtering" }
+                    val formattedChecksum = reference.sumOf { it.name.orEmpty().length + it.description.orEmpty().length }
+
+                    row("filter_sort_limit_$label", managed.size, withFacts.size) {
+                        DirectDebridStreamFilter.applyPreferencesWithFacts(managed, settings, kotlinFacts).size
+                    }
+                    row("format_$label", withFacts.size, withFacts.sumOf { (stream, _) -> formattedLength(stream, reference) }) {
+                        withFacts.sumOf { (stream, facts) ->
+                            formatter.format(stream, settings, emptyList(), facts).let { it.name.orEmpty().length + it.description.orEmpty().length }
+                        }
+                    }
+                    row("apply_end_to_end_kotlin_$label", size, formattedChecksum) { applyChecksum(group, settings) }
+                    if (native) {
+                        ReleaseFactsClassifier.nativeEnabled = true
+                        check(presentation.apply(group, settings, includeBadgeMatches = false).single().streams == reference) {
+                            "$label: Rust-backed output differs from Kotlin"
+                        }
+                        row("apply_end_to_end_rust_$label", size, formattedChecksum) { applyChecksum(group, settings) }
+                        ReleaseFactsClassifier.nativeEnabled = false
+                    }
                 }
             }
         } finally {
             ReleaseFactsClassifier.nativeEnabled = previous
+            File("build/reports/nuvio-bench").apply { mkdirs() }.resolve("provider_processing.csv").writeText(lines.joinToString("\n", postfix = "\n"))
         }
     }
 
-    private fun once(block: () -> Int): Double {
+    private fun group(streams: List<Stream>) = listOf(AddonStreams(ProviderStreamFixtures.ADDON, null, streams))
+
+    private fun applyCount(group: List<AddonStreams>, settings: DebridSettings): Int =
+        presentation.apply(group, settings, includeBadgeMatches = false).single().streams.size
+
+    private fun applyChecksum(group: List<AddonStreams>, settings: DebridSettings): Int =
+        presentation.apply(group, settings, includeBadgeMatches = false).single().streams
+            .sumOf { it.name.orEmpty().length + it.description.orEmpty().length }
+
+    private fun formattedLength(source: Stream, reference: List<Stream>): Int =
+        reference.first { it.infoHash == source.infoHash }.let { it.name.orEmpty().length + it.description.orEmpty().length }
+
+    /** Depends on every classified field, so a classifier that returns defaults cannot match. */
+    private fun checksum(facts: ReleaseTextFacts): Int =
+        1 + facts.resolution.ordinal + 3 * facts.quality.ordinal + 5 * facts.encode.ordinal +
+            7 * facts.visualTags.sumOf { it.ordinal + 1 } + 11 * facts.audioTags.sumOf { it.ordinal + 1 } +
+            13 * facts.audioChannels.sumOf { it.ordinal + 1 } + 17 * facts.languages.sumOf { it.ordinal + 1 } +
+            19 * facts.releaseGroup.length
+
+    private class Stat(
+        val p50: Double, val p90: Double, val p99: Double, val min: Double, val max: Double,
+        val roundP50Min: Double, val roundP50Max: Double, val bytes: Double
+    )
+
+    private fun once(expected: Int?, block: () -> Int): Double {
         val start = System.nanoTime()
-        check(block() >= 0)
-        return (System.nanoTime() - start).toDouble()
+        val result = block()
+        val elapsed = (System.nanoTime() - start).toDouble()
+        check(expected == null || result == expected) { "cold run returned $result, expected $expected" }
+        return elapsed
     }
 
-    /** Median, p10, p90 wall time (ns) and mean allocated bytes of one call, after a 1.5 s warm-up. */
-    private fun measure(block: () -> Int): Stat {
-        var sink = 0
+    /**
+     * Wall time (ns) over [ROUNDS] rounds of [SAMPLES] calls after a 1.5 s warm-up, plus the spread
+     * of the per-round medians and the mean allocated bytes per call.
+     */
+    private fun measure(expected: Int, block: () -> Int): Stat {
+        fun call() {
+            val result = block()
+            check(result == expected) { "stage returned $result, expected $expected" }
+        }
         val deadline = System.nanoTime() + 1_500_000_000L
-        while (System.nanoTime() < deadline) sink += block()
-        val thread = Thread.currentThread().id
-        val samples = DoubleArray(41)
-        for (i in samples.indices) {
-            val start = System.nanoTime()
-            sink += block()
-            samples[i] = (System.nanoTime() - start).toDouble()
+        while (System.nanoTime() < deadline) call()
+        val samples = DoubleArray(ROUNDS * SAMPLES)
+        val roundMedians = DoubleArray(ROUNDS)
+        for (round in 0 until ROUNDS) {
+            for (i in 0 until SAMPLES) {
+                val start = System.nanoTime()
+                call()
+                samples[round * SAMPLES + i] = (System.nanoTime() - start).toDouble()
+            }
+            roundMedians[round] = samples.copyOfRange(round * SAMPLES, (round + 1) * SAMPLES).apply { sort() }[SAMPLES / 2]
         }
         // Separate pass so the reflective counter reads do not perturb the timings.
+        val thread = Thread.currentThread().id
         val bytesBefore = allocatedBytes(thread)
-        repeat(samples.size) { sink += block() }
+        repeat(SAMPLES) { call() }
         val allocated = allocatedBytes(thread) - bytesBefore
-        check(sink >= 0)
         samples.sort()
-        return Stat(samples[20], samples[4], samples[36], allocated.toDouble() / samples.size)
+        fun percentile(p: Int) = samples[((samples.size - 1) * p + 50) / 100]
+        return Stat(
+            percentile(50), percentile(90), percentile(99), samples.first(), samples.last(),
+            roundMedians.min(), roundMedians.max(), allocated.toDouble() / SAMPLES
+        )
     }
 
-    private fun dumpForRust(size: Int, streams: List<Stream>) {
+    private fun dumpForRust(size: Int, streams: List<Stream>, facts: List<ReleaseTextFacts>) {
         val dir = File("../rust/target/bench").apply { mkdirs() }
         val array = JsonArray()
-        streams.forEach { array.add(JsonObject().apply { add("input", ProviderStreamFixtures.toFixtureInput(it)) }) }
-        File(dir, "provider_streams_$size.json").writeText(GsonBuilder().disableHtmlEscaping().create().toJson(array))
-    }
-}
-
-/** Debrid addon results shaped like Torrentio/Comet/AIOStreams responses for one title. */
-object ProviderStreamFixtures {
-    private val resolutions = listOf("2160p", "1080p", "720p", "480p", "4K", "UHD")
-    private val sources = listOf("BluRay", "BluRay.REMUX", "WEB-DL", "WEBRip", "HDTV", "BDRip", "HDRip", "CAM")
-    private val visual = listOf("", "DV", "HDR", "HDR10", "HDR10+", "DV.HDR", "10bit", "SDR", "IMAX")
-    private val audio = listOf("DDP5.1", "DD5.1", "TrueHD.Atmos.7.1", "DTS-HD.MA.5.1", "AAC2.0", "Opus", "FLAC", "DTS")
-    private val codecs = listOf("x265", "x264", "HEVC", "H.264", "AV1", "XviD")
-    private val groups = listOf("FraMeSToR", "NTb", "RARBG", "YIFY", "FLUX", "SPARKS", "TGx", "PSA")
-    private val languages = listOf("", "ITA.ENG", "MULTi", "FRENCH", "GERMAN.DL", "Castellano", "Latino", "HINDI")
-    private val services = listOf("torbox", "realdebrid", "alldebrid", "premiumize")
-
-    fun addonStreams(size: Int, random: Random): List<Stream> = List(size) { index ->
-        val release = listOf(
-            "The.Example.Movie.2023", resolutions.random(random), sources.random(random), visual.random(random),
-            audio.random(random), codecs.random(random), languages.random(random)
-        ).filter { it.isNotEmpty() }.joinToString(".") + "-" + groups.random(random)
-        val sizeText = "%.1f GB".format(java.util.Locale.ROOT, random.nextDouble(0.7, 80.0))
-        val withParsed = random.nextInt(3) == 0
-        ReleaseFactsParityTest.stream(
-            name = "[${services.random(random).take(2).uppercase()}+] Torrentio\n${resolutions.random(random)}",
-            title = "$release\n👤 ${random.nextInt(1, 900)} 💾 $sizeText ⚙️ ThePirateBay",
-            description = if (random.nextBoolean()) "$release.mkv" else null,
-            resolve = ReleaseFactsParityTest.resolve(
-                title = "The Example Movie",
-                torrentName = release,
-                filename = "$release.mkv",
-                raw = if (!withParsed) null else StreamClientResolveRaw(
-                    torrentName = release, filename = "$release.mkv", size = null, folderSize = null,
-                    tracker = null, indexer = null, network = null,
-                    parsed = ReleaseFactsParityTest.parsed(
-                        resolution = resolutions.random(random), quality = sources.random(random),
-                        codec = codecs.random(random), hdr = listOf(visual.random(random)).filter { it.isNotEmpty() },
-                        audio = listOf(audio.random(random)), channels = listOf("5.1"),
-                        languages = if (random.nextBoolean()) listOf("en") else emptyList(),
-                        group = groups.random(random), parsedTitle = "The Example Movie"
-                    )
-                )
-            )
-        ).copy(infoHash = "%040x".format(index), addonName = "Torrentio")
-    }
-
-    /** Inverse of `ReleaseFactsParityTest.streamFrom` for the fields classification reads. */
-    fun toFixtureInput(stream: Stream): JsonObject = JsonObject().apply {
-        stream.name?.let { addProperty("name", it) }
-        stream.title?.let { addProperty("title", it) }
-        stream.description?.let { addProperty("description", it) }
-        stream.quality?.let { addProperty("quality", it) }
-        stream.debridCacheStatus?.cachedName?.let { addProperty("cachedName", it) }
-        stream.clientResolve?.let { resolve ->
-            add("resolve", JsonObject().apply {
-                resolve.title?.let { addProperty("title", it) }
-                resolve.torrentName?.let { addProperty("torrentName", it) }
-                resolve.filename?.let { addProperty("filename", it) }
-                resolve.stream?.raw?.let { raw ->
-                    add("raw", JsonObject().apply {
-                        raw.torrentName?.let { addProperty("torrentName", it) }
-                        raw.filename?.let { addProperty("filename", it) }
-                        raw.parsed?.let { p ->
-                            add("parsed", JsonObject().apply {
-                                p.resolution?.let { addProperty("resolution", it) }
-                                p.quality?.let { addProperty("quality", it) }
-                                p.codec?.let { addProperty("codec", it) }
-                                p.group?.let { addProperty("group", it) }
-                                p.parsedTitle?.let { addProperty("parsedTitle", it) }
-                                fun list(key: String, values: List<String>?) {
-                                    values?.let { v -> add(key, JsonArray().apply { v.forEach(::add) }) }
-                                }
-                                list("hdr", p.hdr); list("audio", p.audio); list("channels", p.channels); list("languages", p.languages)
-                            })
-                        }
-                    })
-                }
+        streams.forEachIndexed { index, stream ->
+            array.add(JsonObject().apply {
+                add("input", ProviderStreamFixtures.toFixtureInput(stream))
+                add("expected", ReleaseFactsParityTest.toJson(facts[index]))
             })
         }
+        File(dir, "provider_streams_$size.json").writeText(GsonBuilder().disableHtmlEscaping().create().toJson(array))
+    }
+
+    private companion object {
+        const val ROUNDS = 5
+        const val SAMPLES = 61
     }
 }

@@ -63,9 +63,17 @@ object DirectDebridStreamFilter {
     fun applyPreferencesWithFacts(
         streams: List<Stream>,
         settings: DebridSettings
+    ): List<Pair<Stream, StreamFacts>> =
+        applyPreferencesWithFacts(streams, settings, ReleaseFactsClassifier.classifyAll(streams))
+
+    /** Filter, sort and limit with already classified [textFacts] (one per stream, same order). */
+    internal fun applyPreferencesWithFacts(
+        streams: List<Stream>,
+        settings: DebridSettings,
+        textFacts: List<ReleaseTextFacts>
     ): List<Pair<Stream, StreamFacts>> {
+        require(textFacts.size == streams.size) { "Expected ${streams.size} facts, got ${textFacts.size}" }
         val preferences = effectivePreferences(settings)
-        val textFacts = ReleaseFactsClassifier.classifyAll(streams)
         val matchedStreams = streams.mapIndexed { index, stream -> stream to streamFacts(stream, textFacts[index], preferences) }
             .filter { (_, facts) -> facts.matchesFilters(preferences) }
 
