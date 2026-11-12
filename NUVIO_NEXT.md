@@ -110,6 +110,26 @@ Treat this as a staged decision sequence, not a promise that every candidate mus
 
 Do not add SQLite, another database, or a second cache layer merely because Rust is being introduced. Existing DataStore and Media3 persistence must be understood first.
 
+### Status
+
+Evidence for every decision is in `docs/nuvio-next/PERFORMANCE.md`; the audit is `docs/nuvio-next/AUDIT.md`.
+
+| Step | Status | Outcome |
+|---|---|---|
+| 1. Baseline and audit | Done (PR #1) | Audit complete; `com.nuvio.engine` is prebuilt C++ (libtorrent), not Rust. |
+| 2. Rust integration proof | Done (PR #1) | `rust/` workspace, JNI bridge `libnuvio_core.so` for 4 ABIs, 16 KB aligned; ABI handshake and Kotlin fallback. |
+| 5 (part). Release-name classification | Rust, debug builds only | 4.5–5.5× faster on the host; release builds stay on Kotlin until measured on devices. |
+| 3. Metadata core | Decided: Kotlin (PR #2) | Moshi decoding dominates; fixed a regex hot spot instead. |
+| 4. Search/filter core | Decided: Kotlin (Milestone 4) | Library grid query 19–300× faster via `LibraryIndex`; the Rust saving ceiling is ≤ 0.13 ms per query. |
+| 6. Library indexing | Done in Kotlin (Milestone 4) | `LibraryIndex` holds precomputed keys and cached sort orders per library snapshot, in memory only. |
+| 5. Provider result processing | Next | — |
+
+The owner's long-term direction (2026-11-12) is for Rust to become the primary engine for
+performance-critical core logic: data processing, search, filtering, indexing, provider processing
+and aggregation. Each move still has to be justified by benchmarks that include JNI costs.
+Kotlin keeps UI, lifecycle, platform APIs, Media3 and device integrations. New Rust paths stay
+behind flags in release builds until correctness, device performance and compatibility are verified.
+
 ## 6. First milestone: read-only technical audit
 
 Before implementing the Rust bridge or changing application architecture, complete a repository audit.
