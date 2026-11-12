@@ -1,0 +1,14 @@
+[package]
+name = "nuvio-core"
+description = "Portable, Android-independent core logic for Nuvio Next."
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license-file.workspace = true
+publish.workspace = true
+
+[dependencies]
+
+[dev-dependencies]
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"

@@ -1,0 +1,1439 @@
+[
+  {
+    "name": "remux dv atmos",
+    "input": {
+      "name": "Torrentio\n4k DV HDR",
+      "title": "Movie.2023.2160p.BluRay.REMUX.DV.HDR10.TrueHD.Atmos.7.1.HEVC-FraMeSToR\n💾 61.2 GB ⚙️ ThePirateBay"
+    },
+    "expected": {
+      "resolution": "P2160",
+      "quality": "BLURAY_REMUX",
+      "visualTags": [
+        "HDR_DV",
+        "HDR10",
+        "DV",
+        "HDR"
+      ],
+      "audioTags": [
+        "ATMOS",
+        "TRUEHD"
+      ],
+      "audioChannels": [
+        "CH_7_1"
+      ],
+      "encode": "HEVC",
+      "languages": [],
+      "releaseGroup": ""
+    }
+  },
+  {
+    "name": "web-dl ddp 5.1",
+    "input": {
+      "name": "[RD+] Comet 1080p",
+      "title": "Show.S01E02.1080p.WEB-DL.DDP5.1.H.264-NTb",
+      "quality": "1080p"
+    },
+    "expected": {
+      "resolution": "P1080",
+      "quality": "WEB_DL",
+      "visualTags": [
+        "UNKNOWN"
+      ],
+      "audioTags": [
+        "DD_PLUS"
+      ],
+      "audioChannels": [
+        "UNKNOWN"
+      ],
+      "encode": "UNKNOWN",
+      "languages": [],
+      "releaseGroup": "dl.ddp5.1.h"
+    }
+  },
+  {
+    "name": "webrip x265 10bit",
+    "input": {
+      "title": "Film 2019 720p WEBRip x265 10bit AAC 2.0-RARBG",
+      "description": "Film 2019"
+    },
+    "expected": {
+      "resolution": "P720",
+      "quality": "WEBRIP",
+      "visualTags": [
+        "TEN_BIT"
+      ],
+      "audioTags": [
+        "AAC"
+      ],
+      "audioChannels": [
+        "CH_2_0"
+      ],
+      "encode": "HEVC",
+      "languages": [],
+      "releaseGroup": ""
+    }
+  },
+  {
+    "name": "hdr10+ imax",
+    "input": {
+      "title": "Movie.2022.IMAX.2160p.WEB-DL.DDP5.1.Atmos.HDR10+.HEVC-GROUP.mkv"
+    },
+    "expected": {
+      "resolution": "P2160",
+      "quality": "WEB_DL",
+      "visualTags": [
+        "HDR_ONLY",
+        "HDR10_PLUS",
+        "HDR10",
+        "HDR",
+        "IMAX"
+      ],
+      "audioTags": [
+        "ATMOS",
+        "DD_PLUS"
+      ],
+      "audioChannels": [
+        "UNKNOWN"
+      ],
+      "encode": "HEVC",
+      "languages": [],
+      "releaseGroup": "dl.ddp5.1.atmos"
+    }
+  },
+  {
+    "name": "hdr10plus spelled",
+    "input": {
+      "title": "movie hdr10plus 2160p"
+    },
+    "expected": {
+      "resolution": "P2160",
+      "quality": "UNKNOWN",
+      "visualTags": [
+        "HDR_ONLY",
+        "HDR10_PLUS",
+        "HDR10",
+        "HDR"
+      ],
+      "audioTags": [
+        "UNKNOWN"
+      ],
+      "audioChannels": [
+        "UNKNOWN"
+      ],
+      "encode": "UNKNOWN",
+      "languages": [],
+      "releaseGroup": ""
+    }
+  },
+  {
+    "name": "dolby vision words",
+    "input": {
+      "title": "Movie 2160p Dolby.Vision TrueHD"
+    },
+    "expected": {
+      "resolution": "P2160",
+      "quality": "UNKNOWN",
+      "visualTags": [
+        "DV_ONLY",
+        "DV"
+      ],
+      "audioTags": [
+        "TRUEHD"
+      ],
+      "audioChannels": [
+        "UNKNOWN"
+      ],
+      "encode": "UNKNOWN",
+      "languages": [],
+      "releaseGroup": ""
+    }
+  },
+  {
+    "name": "dolby-vision dashed",
+    "input": {
+      "title": "Movie 2160p dolby-vision dts-hd ma 7.1"
+    },
+    "expected": {
+      "resolution": "P2160",
+      "quality": "UNKNOWN",
+      "visualTags": [
+        "DV_ONLY",
+        "DV"
+      ],
+      "audioTags": [
+        "DTS_HD_MA",
+        "DTS_HD",
+        "DTS"
+      ],
+      "audioChannels": [
+        "CH_7_1"
+      ],
+      "encode": "UNKNOWN",
+      "languages": [],
+      "releaseGroup": ""
+    }
+  },
+  {
+    "name": "dovi only",
+    "input": {
+      "title": "Movie.2160p.DoVi.WEB-DL"
+    },
+    "expected": {
+      "resolution": "P2160",
+      "quality": "WEB_DL",
+      "visualTags": [
+        "DV_ONLY",
+        "DV"
+      ],
+      "audioTags": [
+        "UNKNOWN"
+      ],
+      "audioChannels": [
+        "UNKNOWN"
+      ],
+      "encode": "UNKNOWN",
+      "languages": [],
+      "releaseGroup": "dl"
+    }
+  },
+  {
+    "name": "hlg sdr 3d",
+    "input": {
+      "title": "Concert 1080p HLG SDR 3D H-SBS"
+    },
+    "expected": {
+      "resolution": "P1080",
+      "quality": "UNKNOWN",
+      "visualTags": [
+        "HDR_ONLY",
+        "HDR",
+        "HLG",
+        "THREE_D",
+        "SDR",
+        "H_SBS"
+      ],
+      "audioTags": [
+        "UNKNOWN"
+      ],
+      "audioChannels": [
+        "UNKNOWN"
+      ],
+      "encode": "UNKNOWN",
+      "languages": [],
+      "releaseGroup": "sbs"
+    }
+  },
+  {
+    "name": "h-ou",
+    "input": {
+      "title": "Movie 3D H-OU 1080p BluRay"
+    },
+    "expected": {
+      "resolution": "P1080",
+      "quality": "BLURAY",
+      "visualTags": [
+        "THREE_D",
+        "H_OU"
+      ],
+      "audioTags": [
+        "UNKNOWN"
+      ],
+      "audioChannels": [
+        "UNKNOWN"
+      ],
+      "encode": "UNKNOWN",
+      "languages": [],
+      "releaseGroup": ""
+    }
+  },
+  {
+    "name": "cam ts tc scr",
+    "input": {
+      "title": "New.Movie.2024.CAM.x264"
+    },
+    "expected": {
+      "resolution": "UNKNOWN",
+      "quality": "CAM",
+      "visualTags": [
+        "UNKNOWN"
+      ],
+      "audioTags": [
+        "UNKNOWN"
+      ],
+      "audioChannels": [
+        "UNKNOWN"
+      ],
+      "encode": "AVC",
+      "languages": [],
+      "releaseGroup": ""
+    }
+  },
+  {
+    "name": "ts token",
+    "input": {
+      "title": "New Movie 2024 TS 720p"
+    },
+    "expected": {
+      "resolution": "P720",
+      "quality": "TS",
+      "visualTags": [
+        "UNKNOWN"
+      ],
+      "audioTags": [
+        "UNKNOWN"
+      ],
+      "audioChannels": [
+        "UNKNOWN"
+      ],
+      "encode": "UNKNOWN",
+      "languages": [],
+      "releaseGroup": ""
+    }
+  },
+  {
+    "name": "tc token",
+    "input": {
+      "title": "New Movie 2024 TC"
+    },
+    "expected": {
+      "resolution": "UNKNOWN",
+      "quality": "TC",
+      "visualTags": [
+        "UNKNOWN"
+      ],
+      "audioTags": [
+        "UNKNOWN"
+      ],
+      "audioChannels": [
+        "UNKNOWN"
+      ],
+      "encode": "UNKNOWN",
+      "languages": [],
+      "releaseGroup": ""
+    }
+  },
+  {
+    "name": "scr token",
+    "input": {
+      "title": "New Movie 2024 DVDSCR SCR"
+    },
+    "expected": {
+      "resolution": "UNKNOWN",
+      "quality": "SCR",
+      "visualTags": [
+        "UNKNOWN"
+      ],
+      "audioTags": [
+        "UNKNOWN"
+      ],
+      "audioChannels": [
+        "UNKNOWN"
+      ],
+      "encode": "UNKNOWN",
+      "languages": [],
+      "releaseGroup": ""
+    }
+  },
+  {
+    "name": "hdtv xvid",
+    "input": {
+      "title": "Show.S05E01.HDTV.XviD-LOL"
+    },
+    "expected": {
+      "resolution": "UNKNOWN",
+      "quality": "HDTV",
+      "visualTags": [
+        "UNKNOWN"
+      ],
+      "audioTags": [
+        "UNKNOWN"
+      ],
+      "audioChannels": [
+        "UNKNOWN"
+      ],
+      "encode": "XVID",
+      "languages": [],
+      "releaseGroup": "lol"
+    }
+  },
+  {
+    "name": "dvdrip divx",
+    "input": {
+      "title": "Old.Movie.1999.DVDRip.DivX-WAF"
+    },
+    "expected": {
+      "resolution": "UNKNOWN",
+      "quality": "DVDRIP",
+      "visualTags": [
+        "UNKNOWN"
+      ],
+      "audioTags": [
+        "UNKNOWN"
+      ],
+      "audioChannels": [
+        "UNKNOWN"
+      ],
+      "encode": "DIVX",
+      "languages": [],
+      "releaseGroup": "waf"
+    }
+  },
+  {
+    "name": "hdrip",
+    "input": {
+      "title": "Movie.2018.HDRip.AC3"
+    },
+    "expected": {
+      "resolution": "UNKNOWN",
+      "quality": "HDRIP",
+      "visualTags": [
+        "UNKNOWN"
+      ],
+      "audioTags": [
+        "DD"
+      ],
+      "audioChannels": [
+        "UNKNOWN"
+      ],
+      "encode": "UNKNOWN",
+      "languages": [],
+      "releaseGroup": ""
+    }
+  },
+  {
+    "name": "hc hd-rip",
+    "input": {
+      "title": "Movie 2018 HC HD-Rip 720p"
+    },
+    "expected": {
+      "resolution": "P720",
+      "quality": "HD_RIP",
+      "visualTags": [
+        "UNKNOWN"
+      ],
+      "audioTags": [
+        "UNKNOWN"
+      ],
+      "audioChannels": [
+        "UNKNOWN"
+      ],
+      "encode": "UNKNOWN",
+      "languages": [],
+      "releaseGroup": ""
+    }
+  },
+  {
+    "name": "bdrip av1 opus",
+    "input": {
+      "title": "Anime.S01.1080p.BDRip.AV1.Opus-Group"
+    },
+    "expected": {
+      "resolution": "P1080",
+      "quality": "BLURAY",
+      "visualTags": [
+        "UNKNOWN"
+      ],
+      "audioTags": [
+        "OPUS"
+      ],
+      "audioChannels": [
+        "UNKNOWN"
+      ],
+      "encode": "AV1",
+      "languages": [],
+      "releaseGroup": "group"
+    }
+  },
+  {
+    "name": "brrip flac",
+    "input": {
+      "title": "Movie 1080p BRRip FLAC 2.0"
+    },
+    "expected": {
+      "resolution": "P1080",
+      "quality": "BLURAY",
+      "visualTags": [
+        "UNKNOWN"
+      ],
+      "audioTags": [
+        "FLAC"
+      ],
+      "audioChannels": [
+        "CH_2_0"
+      ],
+      "encode": "UNKNOWN",
+      "languages": [],
+      "releaseGroup": ""
+    }
+  },
+  {
+    "name": "dts:x dts-es",
+    "input": {
+      "title": "Movie 2160p UHD BluRay DTS:X DTS-ES 6.1"
+    },
+    "expected": {
+      "resolution": "P2160",
+      "quality": "BLURAY",
+      "visualTags": [
+        "UNKNOWN"
+      ],
+      "audioTags": [
+        "DTS_X",
+        "DTS_ES",
+        "DTS"
+      ],
+      "audioChannels": [
+        "CH_6_1"
+      ],
+      "encode": "UNKNOWN",
+      "languages": [
+        "ES"
+      ],
+      "releaseGroup": ""
+    }
+  },
+  {
+    "name": "dtsx dtshd",
+    "input": {
+      "title": "movie dtsx dtshd ma 7.1 hevc"
+    },
+    "expected": {
+      "resolution": "UNKNOWN",
+      "quality": "UNKNOWN",
+      "visualTags": [
+        "UNKNOWN"
+      ],
+      "audioTags": [
+        "DTS_X",
+        "DTS_HD_MA",
+        "DTS_HD"
+      ],
+      "audioChannels": [
+        "CH_7_1"
+      ],
+      "encode": "HEVC",
+      "languages": [],
+      "releaseGroup": ""
+    }
+  },
+  {
+    "name": "dd and ac3",
+    "input": {
+      "title": "Movie 720p DD 2.0 AC3"
+    },
+    "expected": {
+      "resolution": "P720",
+      "quality": "UNKNOWN",
+      "visualTags": [
+        "UNKNOWN"
+      ],
+      "audioTags": [
+        "DD"
+      ],
+      "audioChannels": [
+        "CH_2_0"
+      ],
+      "encode": "UNKNOWN",
+      "languages": [],
+      "releaseGroup": ""
+    }
+  },
+  {
+    "name": "dolby digital plus",
+    "input": {
+      "title": "Movie dolby digital plus 5.1"
+    },
+    "expected": {
+      "resolution": "UNKNOWN",
+      "quality": "UNKNOWN",
+      "visualTags": [
+        "UNKNOWN"
+      ],
+      "audioTags": [
+        "DD_PLUS",
+        "DD"
+      ],
+      "audioChannels": [
+        "CH_5_1"
+      ],
+      "encode": "UNKNOWN",
+      "languages": [],
+      "releaseGroup": ""
+    }
+  },
+  {
+    "name": "6ch",
+    "input": {
+      "title": "Movie 1080p 6CH x264"
+    },
+    "expected": {
+      "resolution": "P1080",
+      "quality": "UNKNOWN",
+      "visualTags": [
+        "UNKNOWN"
+      ],
+      "audioTags": [
+        "UNKNOWN"
+      ],
+      "audioChannels": [
+        "CH_5_1"
+      ],
+      "encode": "AVC",
+      "languages": [],
+      "releaseGroup": ""
+    }
+  },
+  {
+    "name": "uhd 4k",
+    "input": {
+      "title": "Movie UHD BluRay"
+    },
+    "expected": {
+      "resolution": "P2160",
+      "quality": "BLURAY",
+      "visualTags": [
+        "UNKNOWN"
+      ],
+      "audioTags": [
+        "UNKNOWN"
+      ],
+      "audioChannels": [
+        "UNKNOWN"
+      ],
+      "encode": "UNKNOWN",
+      "languages": [],
+      "releaseGroup": ""
+    }
+  },
+  {
+    "name": "2k 1440",
+    "input": {
+      "title": "Game.Capture.2K.1440p"
+    },
+    "expected": {
+      "resolution": "P1440",
+      "quality": "UNKNOWN",
+      "visualTags": [
+        "UNKNOWN"
+      ],
+      "audioTags": [
+        "UNKNOWN"
+      ],
+      "audioChannels": [
+        "UNKNOWN"
+      ],
+      "encode": "UNKNOWN",
+      "languages": [],
+      "releaseGroup": ""
+    }
+  },
+  {
+    "name": "fhd",
+    "input": {
+      "title": "Movie FHD"
+    },
+    "expected": {
+      "resolution": "P1080",
+      "quality": "UNKNOWN",
+      "visualTags": [
+        "UNKNOWN"
+      ],
+      "audioTags": [
+        "UNKNOWN"
+      ],
+      "audioChannels": [
+        "UNKNOWN"
+      ],
+      "encode": "UNKNOWN",
+      "languages": [],
+      "releaseGroup": ""
+    }
+  },
+  {
+    "name": "hd token is 720",
+    "input": {
+      "title": "Movie HD"
+    },
+    "expected": {
+      "resolution": "P720",
+      "quality": "UNKNOWN",
+      "visualTags": [
+        "UNKNOWN"
+      ],
+      "audioTags": [
+        "UNKNOWN"
+      ],
+      "audioChannels": [
+        "UNKNOWN"
+      ],
+      "encode": "UNKNOWN",
+      "languages": [],
+      "releaseGroup": ""
+    }
+  },
+  {
+    "name": "576 480 sd 360",
+    "input": {
+      "title": "Movie 576p SD"
+    },
+    "expected": {
+      "resolution": "P576",
+      "quality": "UNKNOWN",
+      "visualTags": [
+        "UNKNOWN"
+      ],
+      "audioTags": [
+        "UNKNOWN"
+      ],
+      "audioChannels": [
+        "UNKNOWN"
+      ],
+      "encode": "UNKNOWN",
+      "languages": [],
+      "releaseGroup": ""
+    }
+  },
+  {
+    "name": "360p",
+    "input": {
+      "title": "Clip 360p"
+    },
+    "expected": {
+      "resolution": "P360",
+      "quality": "UNKNOWN",
+      "visualTags": [
+        "UNKNOWN"
+      ],
+      "audioTags": [
+        "UNKNOWN"
+      ],
+      "audioChannels": [
+        "UNKNOWN"
+      ],
+      "encode": "UNKNOWN",
+      "languages": [],
+      "releaseGroup": ""
+    }
+  },
+  {
+    "name": "resolution from stream quality",
+    "input": {
+      "title": "Movie",
+      "quality": "4K"
+    },
+    "expected": {
+      "resolution": "P2160",
+      "quality": "UNKNOWN",
+      "visualTags": [
+        "UNKNOWN"
+      ],
+      "audioTags": [
+        "UNKNOWN"
+      ],
+      "audioChannels": [
+        "UNKNOWN"
+      ],
+      "encode": "UNKNOWN",
+      "languages": [],
+      "releaseGroup": ""
+    }
+  },
+  {
+    "name": "no resolution unknowns",
+    "input": {
+      "name": "Some Addon",
+      "title": "Just a title"
+    },
+    "expected": {
+      "resolution": "UNKNOWN",
+      "quality": "UNKNOWN",
+      "visualTags": [
+        "UNKNOWN"
+      ],
+      "audioTags": [
+        "UNKNOWN"
+      ],
+      "audioChannels": [
+        "UNKNOWN"
+      ],
+      "encode": "UNKNOWN",
+      "languages": [],
+      "releaseGroup": ""
+    }
+  },
+  {
+    "name": "embedded tokens are not tokens",
+    "input": {
+      "title": "Moviets2160px tsunami catalog hdrx"
+    },
+    "expected": {
+      "resolution": "UNKNOWN",
+      "quality": "UNKNOWN",
+      "visualTags": [
+        "UNKNOWN"
+      ],
+      "audioTags": [
+        "UNKNOWN"
+      ],
+      "audioChannels": [
+        "UNKNOWN"
+      ],
+      "encode": "UNKNOWN",
+      "languages": [],
+      "releaseGroup": ""
+    }
+  },
+  {
+    "name": "languages from text",
+    "input": {
+      "title": "Movie.2021.1080p.ITA.ENG.MULTi.WEB-DL",
+      "description": "Audio: Italian, English"
+    },
+    "expected": {
+      "resolution": "P1080",
+      "quality": "WEB_DL",
+      "visualTags": [
+        "UNKNOWN"
+      ],
+      "audioTags": [
+        "UNKNOWN"
+      ],
+      "audioChannels": [
+        "UNKNOWN"
+      ],
+      "encode": "UNKNOWN",
+      "languages": [
+        "EN",
+        "IT",
+        "MULTI"
+      ],
+      "releaseGroup": ""
+    }
+  },
+  {
+    "name": "truefrench castellano latino",
+    "input": {
+      "title": "Film.2020.TRUEFRENCH.1080p Castellano Latino"
+    },
+    "expected": {
+      "resolution": "P1080",
+      "quality": "UNKNOWN",
+      "visualTags": [
+        "UNKNOWN"
+      ],
+      "audioTags": [
+        "UNKNOWN"
+      ],
+      "audioChannels": [
+        "UNKNOWN"
+      ],
+      "encode": "UNKNOWN",
+      "languages": [
+        "ES",
+        "FR",
+        "LA"
+      ],
+      "releaseGroup": ""
+    }
+  },
+  {
+    "name": "title words are not languages",
+    "input": {
+      "title": "The.French.Dispatch.2021.1080p.WEB-DL.x264",
+      "resolve": {
+        "title": "The French Dispatch",
+        "raw": {
+          "parsed": {
+            "parsedTitle": "The French Dispatch"
+          }
+        }
+      }
+    },
+    "expected": {
+      "resolution": "P1080",
+      "quality": "WEB_DL",
+      "visualTags": [
+        "UNKNOWN"
+      ],
+      "audioTags": [
+        "UNKNOWN"
+      ],
+      "audioChannels": [
+        "UNKNOWN"
+      ],
+      "encode": "AVC",
+      "languages": [],
+      "releaseGroup": "dl.x264"
+    }
+  },
+  {
+    "name": "title repeated as language",
+    "input": {
+      "title": "The.Italian.Job.2003.ITALIAN.1080p",
+      "resolve": {
+        "title": "The Italian Job"
+      }
+    },
+    "expected": {
+      "resolution": "P1080",
+      "quality": "UNKNOWN",
+      "visualTags": [
+        "UNKNOWN"
+      ],
+      "audioTags": [
+        "UNKNOWN"
+      ],
+      "audioChannels": [
+        "UNKNOWN"
+      ],
+      "encode": "UNKNOWN",
+      "languages": [
+        "IT"
+      ],
+      "releaseGroup": ""
+    }
+  },
+  {
+    "name": "unknown and multi codes",
+    "input": {
+      "title": "Movie unknown multi 1080p"
+    },
+    "expected": {
+      "resolution": "P1080",
+      "quality": "UNKNOWN",
+      "visualTags": [
+        "UNKNOWN"
+      ],
+      "audioTags": [
+        "UNKNOWN"
+      ],
+      "audioChannels": [
+        "UNKNOWN"
+      ],
+      "encode": "UNKNOWN",
+      "languages": [
+        "MULTI",
+        "UNKNOWN"
+      ],
+      "releaseGroup": ""
+    }
+  },
+  {
+    "name": "parsed fields",
+    "input": {
+      "name": "Debrid",
+      "title": "Movie.2023.mkv",
+      "resolve": {
+        "title": "Movie",
+        "torrentName": "Movie.2023.2160p.WEB-DL-GRP",
+        "filename": "Movie.2023.mkv",
+        "raw": {
+          "torrentName": "Movie 2023 Pack",
+          "filename": "movie.mkv",
+          "parsed": {
+            "resolution": "2160p",
+            "quality": "WEB-DL",
+            "codec": "hevc",
+            "hdr": [
+              "DV",
+              "HDR10+"
+            ],
+            "audio": [
+              "Atmos",
+              "DDP"
+            ],
+            "channels": [
+              "5.1"
+            ],
+            "languages": [
+              "English",
+              " en ",
+              "xx",
+              "ita"
+            ],
+            "group": "FLUX",
+            "parsedTitle": "Movie"
+          }
+        }
+      }
+    },
+    "expected": {
+      "resolution": "P2160",
+      "quality": "WEB_DL",
+      "visualTags": [
+        "HDR_DV",
+        "HDR10_PLUS",
+        "HDR10",
+        "DV",
+        "HDR"
+      ],
+      "audioTags": [
+        "ATMOS",
+        "DD_PLUS"
+      ],
+      "audioChannels": [
+        "CH_5_1"
+      ],
+      "encode": "HEVC",
+      "languages": [
+        "EN",
+        "EN",
+        "IT"
+      ],
+      "releaseGroup": "FLUX"
+    }
+  },
+  {
+    "name": "parsed blank group falls back",
+    "input": {
+      "title": "Movie.1080p-GRP",
+      "resolve": {
+        "raw": {
+          "parsed": {
+            "group": "  ",
+            "languages": []
+          }
+        }
+      }
+    },
+    "expected": {
+      "resolution": "P1080",
+      "quality": "UNKNOWN",
+      "visualTags": [
+        "UNKNOWN"
+      ],
+      "audioTags": [
+        "UNKNOWN"
+      ],
+      "audioChannels": [
+        "UNKNOWN"
+      ],
+      "encode": "UNKNOWN",
+      "languages": [],
+      "releaseGroup": "grp"
+    }
+  },
+  {
+    "name": "parsed empty lists change join",
+    "input": {
+      "title": "Movie-GRP",
+      "resolve": {
+        "raw": {
+          "parsed": {
+            "hdr": [],
+            "audio": []
+          }
+        }
+      }
+    },
+    "expected": {
+      "resolution": "UNKNOWN",
+      "quality": "UNKNOWN",
+      "visualTags": [
+        "UNKNOWN"
+      ],
+      "audioTags": [
+        "UNKNOWN"
+      ],
+      "audioChannels": [
+        "UNKNOWN"
+      ],
+      "encode": "UNKNOWN",
+      "languages": [],
+      "releaseGroup": ""
+    }
+  },
+  {
+    "name": "parsed null lists",
+    "input": {
+      "title": "Movie-GRP",
+      "resolve": {
+        "raw": {
+          "parsed": {}
+        }
+      }
+    },
+    "expected": {
+      "resolution": "UNKNOWN",
+      "quality": "UNKNOWN",
+      "visualTags": [
+        "UNKNOWN"
+      ],
+      "audioTags": [
+        "UNKNOWN"
+      ],
+      "audioChannels": [
+        "UNKNOWN"
+      ],
+      "encode": "UNKNOWN",
+      "languages": [],
+      "releaseGroup": "grp"
+    }
+  },
+  {
+    "name": "parsed hdr tokens normalised",
+    "input": {
+      "title": "Movie",
+      "resolve": {
+        "raw": {
+          "parsed": {
+            "hdr": [
+              "Dolby Vision",
+              "HDR10Plus",
+              "hlg"
+            ]
+          }
+        }
+      }
+    },
+    "expected": {
+      "resolution": "UNKNOWN",
+      "quality": "UNKNOWN",
+      "visualTags": [
+        "HDR_DV",
+        "HDR10_PLUS",
+        "HDR10",
+        "DV",
+        "HDR",
+        "HLG"
+      ],
+      "audioTags": [
+        "UNKNOWN"
+      ],
+      "audioChannels": [
+        "UNKNOWN"
+      ],
+      "encode": "UNKNOWN",
+      "languages": [],
+      "releaseGroup": ""
+    }
+  },
+  {
+    "name": "parsed unmapped languages fall back",
+    "input": {
+      "title": "Movie GERMAN 1080p",
+      "resolve": {
+        "raw": {
+          "parsed": {
+            "languages": [
+              "xx",
+              "yy"
+            ]
+          }
+        }
+      }
+    },
+    "expected": {
+      "resolution": "P1080",
+      "quality": "UNKNOWN",
+      "visualTags": [
+        "UNKNOWN"
+      ],
+      "audioTags": [
+        "UNKNOWN"
+      ],
+      "audioChannels": [
+        "UNKNOWN"
+      ],
+      "encode": "UNKNOWN",
+      "languages": [
+        "DE"
+      ],
+      "releaseGroup": ""
+    }
+  },
+  {
+    "name": "cached name text",
+    "input": {
+      "title": "Movie",
+      "cachedName": "Movie.2160p.REMUX-GRP"
+    },
+    "expected": {
+      "resolution": "P2160",
+      "quality": "BLURAY_REMUX",
+      "visualTags": [
+        "UNKNOWN"
+      ],
+      "audioTags": [
+        "UNKNOWN"
+      ],
+      "audioChannels": [
+        "UNKNOWN"
+      ],
+      "encode": "UNKNOWN",
+      "languages": [],
+      "releaseGroup": "grp"
+    }
+  },
+  {
+    "name": "group with extension",
+    "input": {
+      "title": "movie-group.mkv"
+    },
+    "expected": {
+      "resolution": "UNKNOWN",
+      "quality": "UNKNOWN",
+      "visualTags": [
+        "UNKNOWN"
+      ],
+      "audioTags": [
+        "UNKNOWN"
+      ],
+      "audioChannels": [
+        "UNKNOWN"
+      ],
+      "encode": "UNKNOWN",
+      "languages": [],
+      "releaseGroup": "group.mkv"
+    }
+  },
+  {
+    "name": "group before trailing newline",
+    "input": {
+      "title": "Movie 1080p x265-NTb\n"
+    },
+    "expected": {
+      "resolution": "P1080",
+      "quality": "UNKNOWN",
+      "visualTags": [
+        "UNKNOWN"
+      ],
+      "audioTags": [
+        "UNKNOWN"
+      ],
+      "audioChannels": [
+        "UNKNOWN"
+      ],
+      "encode": "HEVC",
+      "languages": [],
+      "releaseGroup": "ntb"
+    }
+  },
+  {
+    "name": "group before crlf",
+    "input": {
+      "title": "Movie 1080p x265-NTb\r\n"
+    },
+    "expected": {
+      "resolution": "P1080",
+      "quality": "UNKNOWN",
+      "visualTags": [
+        "UNKNOWN"
+      ],
+      "audioTags": [
+        "UNKNOWN"
+      ],
+      "audioChannels": [
+        "UNKNOWN"
+      ],
+      "encode": "HEVC",
+      "languages": [],
+      "releaseGroup": "ntb"
+    }
+  },
+  {
+    "name": "group not at end",
+    "input": {
+      "title": "Movie-GRP 1080p"
+    },
+    "expected": {
+      "resolution": "P1080",
+      "quality": "UNKNOWN",
+      "visualTags": [
+        "UNKNOWN"
+      ],
+      "audioTags": [
+        "UNKNOWN"
+      ],
+      "audioChannels": [
+        "UNKNOWN"
+      ],
+      "encode": "UNKNOWN",
+      "languages": [],
+      "releaseGroup": ""
+    }
+  },
+  {
+    "name": "long group truncated",
+    "input": {
+      "title": "Movie-abcdefghijklmnopqrstuvwxyz0123"
+    },
+    "expected": {
+      "resolution": "UNKNOWN",
+      "quality": "UNKNOWN",
+      "visualTags": [
+        "UNKNOWN"
+      ],
+      "audioTags": [
+        "UNKNOWN"
+      ],
+      "audioChannels": [
+        "UNKNOWN"
+      ],
+      "encode": "UNKNOWN",
+      "languages": [],
+      "releaseGroup": ""
+    }
+  },
+  {
+    "name": "unicode dotted capital i",
+    "input": {
+      "title": "FİLM 1080p-İGRP"
+    },
+    "expected": {
+      "resolution": "P1080",
+      "quality": "UNKNOWN",
+      "visualTags": [
+        "UNKNOWN"
+      ],
+      "audioTags": [
+        "UNKNOWN"
+      ],
+      "audioChannels": [
+        "UNKNOWN"
+      ],
+      "encode": "UNKNOWN",
+      "languages": [],
+      "releaseGroup": ""
+    }
+  },
+  {
+    "name": "unicode long s and kelvin",
+    "input": {
+      "title": "Movie 4K -ſgrp"
+    },
+    "expected": {
+      "resolution": "P2160",
+      "quality": "UNKNOWN",
+      "visualTags": [
+        "UNKNOWN"
+      ],
+      "audioTags": [
+        "UNKNOWN"
+      ],
+      "audioChannels": [
+        "UNKNOWN"
+      ],
+      "encode": "UNKNOWN",
+      "languages": [],
+      "releaseGroup": "ſgrp"
+    }
+  },
+  {
+    "name": "greek final sigma",
+    "input": {
+      "title": "ΟΔΟΣ 720p ENG"
+    },
+    "expected": {
+      "resolution": "P720",
+      "quality": "UNKNOWN",
+      "visualTags": [
+        "UNKNOWN"
+      ],
+      "audioTags": [
+        "UNKNOWN"
+      ],
+      "audioChannels": [
+        "UNKNOWN"
+      ],
+      "encode": "UNKNOWN",
+      "languages": [
+        "EN"
+      ],
+      "releaseGroup": ""
+    }
+  },
+  {
+    "name": "emoji and cjk",
+    "input": {
+      "title": "電影 🎬 1080p 中文 Chinese -组"
+    },
+    "expected": {
+      "resolution": "P1080",
+      "quality": "UNKNOWN",
+      "visualTags": [
+        "UNKNOWN"
+      ],
+      "audioTags": [
+        "UNKNOWN"
+      ],
+      "audioChannels": [
+        "UNKNOWN"
+      ],
+      "encode": "UNKNOWN",
+      "languages": [
+        "ZH"
+      ],
+      "releaseGroup": ""
+    }
+  },
+  {
+    "name": "whitespace controls",
+    "input": {
+      "title": "Movie\u001c1080peng x264"
+    },
+    "expected": {
+      "resolution": "P1080",
+      "quality": "UNKNOWN",
+      "visualTags": [
+        "UNKNOWN"
+      ],
+      "audioTags": [
+        "UNKNOWN"
+      ],
+      "audioChannels": [
+        "UNKNOWN"
+      ],
+      "encode": "AVC",
+      "languages": [
+        "EN"
+      ],
+      "releaseGroup": ""
+    }
+  },
+  {
+    "name": "empty strings",
+    "input": {
+      "name": "",
+      "title": "",
+      "description": "",
+      "quality": ""
+    },
+    "expected": {
+      "resolution": "UNKNOWN",
+      "quality": "UNKNOWN",
+      "visualTags": [
+        "UNKNOWN"
+      ],
+      "audioTags": [
+        "UNKNOWN"
+      ],
+      "audioChannels": [
+        "UNKNOWN"
+      ],
+      "encode": "UNKNOWN",
+      "languages": [],
+      "releaseGroup": ""
+    }
+  },
+  {
+    "name": "nothing at all",
+    "input": {},
+    "expected": {
+      "resolution": "UNKNOWN",
+      "quality": "UNKNOWN",
+      "visualTags": [
+        "UNKNOWN"
+      ],
+      "audioTags": [
+        "UNKNOWN"
+      ],
+      "audioChannels": [
+        "UNKNOWN"
+      ],
+      "encode": "UNKNOWN",
+      "languages": [],
+      "releaseGroup": ""
+    }
+  }
+]

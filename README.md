@@ -27,6 +27,8 @@ cd NuvioTV
 
 Nuvio TV is built with Kotlin, Jetpack Compose, TV Material 3, and Media3. Development requires Android Studio, a JDK, and the Android SDK.
 
+Nuvio Next also builds a small Rust core (`rust/`) into the app. Install [rustup](https://rustup.rs) and `cargo install cargo-ndk --version 4.1.2 --locked`; the pinned toolchain installs itself. To build without Rust, pass `-Pnuvio.rustCore=false`. Debug builds also need the signing variables described in [`.github/workflows/pr-full-debug-build.yml`](.github/workflows/pr-full-debug-build.yml). See [docs/nuvio-next](docs/nuvio-next/) for the audit, Rust integration and performance notes.
+
 ## License
 
 [GNU General Public License v3.0](./LICENSE)

@@ -13,6 +13,8 @@ import com.android.build.gradle.internal.tasks.CompileArtProfileTask
 import com.android.build.gradle.internal.tasks.L8DexDesugarLibTask
 import java.io.File
 import java.util.Properties
+import javax.inject.Inject
+import org.gradle.process.ExecOperations
 
 // Copies the per-API dex metadata (.dm) files AGP builds next to the binary ART profile into the APK's assets, so the
 // in-app updater can install the next version together with its profile and have it compiled at install time.
@@ -39,6 +41,49 @@ abstract class EmbedUpdateDexMetadataTask : DefaultTask() {
             "$api=$fileName"
         }
         target.resolve("index.properties").writeText(indexLines.joinToString("\n", postfix = "\n"))
+    }
+}
+
+// Builds rust/nuvio-core-jni (libnuvio_core.so) for the app's ABIs with cargo-ndk into a jniLibs-shaped directory.
+abstract class CargoNdkBuildTask : DefaultTask() {
+    @get:InputFiles
+    @get:PathSensitive(PathSensitivity.RELATIVE)
+    abstract val sources: ConfigurableFileCollection
+
+    @get:Internal
+    abstract val workspaceDirectory: DirectoryProperty
+
+    @get:Input
+    abstract val abis: ListProperty<String>
+
+    @get:Input
+    abstract val minSdk: Property<Int>
+
+    @get:Input
+    abstract val cargo: Property<String>
+
+    @get:Internal
+    abstract val ndkDirectory: DirectoryProperty
+
+    @get:OutputDirectory
+    abstract val outputDirectory: DirectoryProperty
+
+    @get:Inject
+    abstract val execOperations: ExecOperations
+
+    @TaskAction
+    fun build() {
+        val output = outputDirectory.get().asFile
+        output.deleteRecursively()
+        execOperations.exec {
+            workingDir = workspaceDirectory.get().asFile
+            environment("ANDROID_NDK_HOME", ndkDirectory.get().asFile.absolutePath)
+            commandLine(
+                listOf(cargo.get(), "ndk", "--platform", minSdk.get().toString(), "-o", output.absolutePath) +
+                    abis.get().flatMap { listOf("-t", it) } +
+                    listOf("build", "--release", "--locked", "-p", "nuvio-core-jni")
+            )
+        }
     }
 }
 
@@ -125,6 +170,20 @@ val releaseKeyPasswordValue = env("NUVIO_RELEASE_KEY_PASSWORD")
 val releaseStorePasswordValue = env("NUVIO_RELEASE_STORE_PASSWORD")
     ?: localProperties.getProperty("NUVIO_RELEASE_STORE_PASSWORD", "815787")
 
+// Rust core (rust/, see docs/nuvio-next/RUST_INTEGRATION.md). Build without a Rust toolchain with
+// -Pnuvio.rustCore=false; the app then uses its Kotlin implementations.
+val rustCoreEnabled = providers.gradleProperty("nuvio.rustCore").orNull?.let(::parseBooleanProperty) ?: true
+// Routes release-name classification through Rust (Kotlin stays the fallback). Unset: on for debug builds
+// (device dogfooding), off for release/benchmark until measured on TV hardware. Set to force either way.
+val rustReleaseFactsProperty = providers.gradleProperty("nuvio.rustReleaseFacts").orNull
+val rustReleaseFactsEnabled = parseBooleanProperty(rustReleaseFactsProperty)
+val rustReleaseFactsDebugEnabled = rustReleaseFactsProperty?.let(::parseBooleanProperty) ?: true
+val rustAbis = listOf("armeabi-v7a", "arm64-v8a", "x86", "x86_64")
+val cargoExecutable = env("CARGO")
+    ?: File(System.getProperty("user.home"), ".cargo/bin/cargo").takeIf { it.canExecute() }?.absolutePath
+    ?: "cargo"
+val rustHostLibrary = rootProject.layout.projectDirectory.file("rust/target/release/" + System.mapLibraryName("nuvio_core"))
+
 android {
     namespace = "com.nuvio.tv"
     compileSdk = 36
@@ -155,6 +214,7 @@ android {
         buildConfigField("String", "DEVICE_LOGIN_WEB_BASE_URL", "\"${localProperties.getProperty("DEVICE_LOGIN_WEB_BASE_URL", "https://nuvio.tv/link")}\"")
         buildConfigField("boolean", "DOVI_NATIVE_ENABLED", enableDoviNative.toString())
         buildConfigField("boolean", "DOVI_EXTRACTOR_HOOK_READY", doviExtractorHookReady.toString())
+        buildConfigField("boolean", "RUST_RELEASE_FACTS_ENABLED", (rustCoreEnabled && rustReleaseFactsEnabled).toString())
         if (enableDoviNative) {
             externalNativeBuild {
                 cmake {
@@ -229,6 +289,7 @@ android {
 
             buildConfigField("boolean", "IS_DEBUG_BUILD", "true")
             buildConfigField("String", "SENTRY_ENVIRONMENT", buildConfigString("debug"))
+            buildConfigField("boolean", "RUST_RELEASE_FACTS_ENABLED", (rustCoreEnabled && rustReleaseFactsDebugEnabled).toString())
 
             // Dev environment (from local.dev.properties)
             buildConfigField("String", "SUPABASE_URL", buildConfigString(resolveProperty(devProperties, localProperties, "NUVIO_SUPABASE_URL")))
@@ -363,6 +424,20 @@ android {
 }
 
 androidComponents {
+    if (rustCoreEnabled) {
+        onVariants { variant ->
+            val variantName = variant.name.replaceFirstChar { it.uppercase() }
+            val rustTask = tasks.register<CargoNdkBuildTask>("buildRustCore$variantName") {
+                sources.from(rootProject.fileTree("rust") { exclude("target/**") })
+                workspaceDirectory.set(rootProject.layout.projectDirectory.dir("rust"))
+                abis.set(rustAbis)
+                minSdk.set(24)
+                cargo.set(cargoExecutable)
+                ndkDirectory.set(sdkComponents.ndkDirectory)
+            }
+            variant.sources.jniLibs?.addGeneratedSourceDirectory(rustTask, CargoNdkBuildTask::outputDirectory)
+        }
+    }
     onVariants(selector().withBuildType("debug")) { variant ->
         val isPlaystore = variant.productFlavors.any { it.second == "playstore" }
         variant.applicationId.set(if (isPlaystore) "com.nuvio.appdebug" else "com.nuviodebug.com")
@@ -380,6 +455,25 @@ androidComponents {
             })
         }
         variant.sources.assets?.addGeneratedSourceDirectory(embedTask, EmbedUpdateDexMetadataTask::outputDirectory)
+    }
+}
+
+// Host build of the Rust core so JVM unit tests exercise the real JNI library.
+val buildRustCoreHost = tasks.register<Exec>("buildRustCoreHost") {
+    workingDir = rootProject.file("rust")
+    commandLine(cargoExecutable, "build", "--release", "--locked", "-p", "nuvio-core-jni")
+    inputs.files(rootProject.fileTree("rust") { exclude("target/**") }).withPathSensitivity(PathSensitivity.RELATIVE)
+    outputs.file(rustHostLibrary)
+}
+
+tasks.withType<Test>().configureEach {
+    // Forwarded switches: regenerate shared Rust/Kotlin fixtures; run opt-in JVM benchmarks.
+    listOf("nuvio.updateFixtures", "nuvio.bench").forEach { key ->
+        providers.gradleProperty(key).orNull?.let { systemProperty(key, it) }
+    }
+    if (rustCoreEnabled) {
+        dependsOn(buildRustCoreHost)
+        systemProperty("nuvio.core.hostLib", rustHostLibrary.asFile.absolutePath)
     }
 }
 
