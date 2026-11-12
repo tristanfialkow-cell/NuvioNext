@@ -19,16 +19,20 @@ class ReleaseFactsBenchmarkTest {
 
         val random = Random(42)
         val fixtures = ReleaseFactsParityTest.loadFixtures().map(ReleaseFactsParityTest::streamFrom)
-        val pool = fixtures + List(2_000) { ReleaseFactsParityTest.randomStream(random) }
+        // "fixtures": hand-written release names; "mixed": plus long synthetic streams from the fuzz generator.
+        val pools = listOf(
+            "fixtures" to fixtures,
+            "mixed" to fixtures + List(2_000) { ReleaseFactsParityTest.randomStream(random) }
+        )
 
-        println("batch,kotlin_us_per_batch,native_us_per_batch,kotlin_ns_per_stream,native_ns_per_stream,speedup")
-        for (batchSize in listOf(20, 100, 500, 2_000)) {
+        println("pool,batch,kotlin_us_per_batch,native_us_per_batch,kotlin_ns_per_stream,native_ns_per_stream,speedup")
+        for ((poolName, pool) in pools) for (batchSize in listOf(20, 100, 500, 2_000)) {
             val batch = List(batchSize) { pool[(it * 7919) % pool.size] }
             val kotlin = measure(batch) { streams -> streams.map(ReleaseFactsClassifier::classifyKotlin) }
             val native = measure(batch) { streams -> NativeReleaseFacts.classify(streams) }
             println(
-                "%d,%.1f,%.1f,%.0f,%.0f,%.2f".format(
-                    batchSize, kotlin / 1_000.0, native / 1_000.0,
+                "%s,%d,%.1f,%.1f,%.0f,%.0f,%.2f".format(
+                    poolName, batchSize, kotlin / 1_000.0, native / 1_000.0,
                     kotlin / batchSize, native / batchSize, kotlin / native
                 )
             )
