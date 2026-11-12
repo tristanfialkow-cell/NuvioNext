@@ -6,15 +6,15 @@ import kotlin.random.Random
 import org.junit.Assert.assertEquals
 import org.junit.Test
 
-/** [LibraryIndex] must return exactly what the reference [LibraryQueryEngine] returns. */
-class LibraryIndexParityTest {
+/** [LibraryGridIndex] must return exactly what the reference [LibraryQueryEngine] returns. */
+class LibraryGridIndexParityTest {
 
     @Test
     fun `index matches the reference engine on randomized libraries and queries`() {
         val random = Random(0x11B)
         repeat(60) { round ->
             val entries = edgeCaseEntries() + LibraryFixtures.library(random.nextInt(0, 400), random)
-            val index = LibraryIndex(entries)
+            val index = LibraryGridIndex(entries)
             repeat(40) { query ->
                 val spec = randomSpec(entries, random)
                 assertEquals(
@@ -29,7 +29,7 @@ class LibraryIndexParityTest {
     @Test
     fun `cached orders stay correct across repeated and alternating queries`() {
         val entries = LibraryFixtures.library(300, Random(7))
-        val index = LibraryIndex(entries)
+        val index = LibraryGridIndex(entries)
         val specs = LibraryFixtures.scenarios().map { it.second }
         repeat(3) {
             specs.forEach { spec -> assertEquals(LibraryQueryEngine.query(entries, spec), index.query(spec)) }
@@ -39,7 +39,7 @@ class LibraryIndexParityTest {
     @Test
     fun `empty library`() {
         val spec = LibraryFixtures.scenarios().first().second
-        assertEquals(LibraryQueryEngine.query(emptyList(), spec), LibraryIndex(emptyList()).query(spec))
+        assertEquals(LibraryQueryEngine.query(emptyList(), spec), LibraryGridIndex(emptyList()).query(spec))
     }
 
     private fun entry(id: String, name: String, type: String = "movie", release: String? = null, genres: List<String> = emptyList(),

@@ -88,7 +88,7 @@ formats, 0–4 genres and 1–3 list memberships. All numbers are medians on thi
 `_uiState.update` on every type, genre, year, watched or sort change.
 - **Before:** the sort comparators re-ran a regex (year extraction, leading-article stripping) on
   every comparison, O(n log n) regex runs per press.
-- **After:** `LibraryIndex` derives every key once per library snapshot, interns strings, and caches
+- **After:** `LibraryGridIndex` derives every key once per library snapshot, interns strings, and caches
   one stable total order per sort option. A query is then a linear pass. A stable sort of a subset
   equals the subset taken in the order of the stable sort of the whole list.
 
@@ -106,7 +106,7 @@ formats, 0–4 genres and 1–3 list memberships. All numbers are medians on thi
 
 - **Build cost:** paid once when the library snapshot changes (sync or edit). Changes to watched IDs
   and filters reuse the index.
-- **Correctness:** `LibraryIndexParityTest` checks 2 400 randomized queries and edge cases against
+- **Correctness:** `LibraryGridIndexParityTest` checks 2 400 randomized queries and edge cases against
   the reference `LibraryQueryEngine`. Edge cases include duplicate IDs, blank names and types, and
   Unicode case pairs (`ß`, `İ`, `ǅ`, Deseret). Results are identical.
 

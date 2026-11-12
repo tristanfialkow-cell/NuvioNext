@@ -902,10 +902,10 @@ class LibraryViewModel @Inject constructor(
 
     // Rebuilt only when the library snapshot changes; filter and sort changes reuse it.
     @Volatile
-    private var libraryIndex: LibraryIndex? = null
+    private var libraryIndex: LibraryGridIndex? = null
 
-    private fun indexFor(items: List<LibraryEntry>): LibraryIndex =
-        libraryIndex?.takeIf { it.entries === items } ?: LibraryIndex(items).also { libraryIndex = it }
+    private fun indexFor(items: List<LibraryEntry>): LibraryGridIndex =
+        libraryIndex?.takeIf { it.entries === items } ?: LibraryGridIndex(items).also { libraryIndex = it }
 
     private fun LibraryUiState.withVisibleItems(): LibraryUiState {
         val result = indexFor(allItems).query(

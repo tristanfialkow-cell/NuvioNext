@@ -13,10 +13,10 @@ import java.util.Locale
  * linear filter pass plus a walk over the cached order: a stable sort of any subset equals the
  * subset taken in the order of a stable sort of the whole list.
  *
- * Results are identical to [LibraryQueryEngine.query] (checked by `LibraryIndexParityTest`).
+ * Results are identical to [LibraryQueryEngine.query] (checked by `LibraryGridIndexParityTest`).
  * Instances are immutable apart from lazily built orders and safe to share across threads.
  */
-class LibraryIndex(val entries: List<LibraryEntry>) {
+class LibraryGridIndex(val entries: List<LibraryEntry>) {
     val size: Int = entries.size
 
     internal val typeFilterIds: IntArray
@@ -105,7 +105,7 @@ class LibraryIndex(val entries: List<LibraryEntry>) {
         val selection = resolve(spec)
         val visible = IntArray(size)
         val counts = LibraryFacetCounts(this)
-        val visibleCount = LibraryIndexKernel.run(this, selection, visible, counts)
+        val visibleCount = LibraryGridKernel.run(this, selection, visible, counts)
         return assemble(selection, visible, visibleCount, counts)
     }
 
@@ -246,7 +246,7 @@ class LibraryIndex(val entries: List<LibraryEntry>) {
 }
 
 /** Facet counters filled by an executor; ids refer to the index's interned values. */
-class LibraryFacetCounts internal constructor(index: LibraryIndex) {
+class LibraryFacetCounts internal constructor(index: LibraryGridIndex) {
     internal val genre = IntArray(index.trimmedGenreValues.size)
     internal val genreSeen = IntArray(index.trimmedGenreValues.size)
     internal var genreSeenCount = 0
@@ -260,12 +260,12 @@ class LibraryFacetCounts internal constructor(index: LibraryIndex) {
     internal fun typeFirstSeen(): List<Int> = (0 until typeSeenCount).map { typeSeen[it] }
 }
 
-/** The per-query pass over a [LibraryIndex]: filters, facet counts and ordering. */
-internal object LibraryIndexKernel {
+/** The per-query pass over a [LibraryGridIndex]: filters, facet counts and ordering. */
+internal object LibraryGridKernel {
     /** Writes visible entry positions in display order to [visible]; returns how many. */
     fun run(
-        index: LibraryIndex,
-        selection: LibraryIndex.Selection,
+        index: LibraryGridIndex,
+        selection: LibraryGridIndex.Selection,
         visible: IntArray,
         counts: LibraryFacetCounts
     ): Int {
@@ -280,9 +280,9 @@ internal object LibraryIndexKernel {
                 typeSeen[tab] = true
                 counts.typeSeen[counts.typeSeenCount++] = tab
             }
-            val typeOk = selection.typeId == LibraryIndex.Selection.ANY || index.typeFilterIds[i] == selection.typeId
+            val typeOk = selection.typeId == LibraryGridIndex.Selection.ANY || index.typeFilterIds[i] == selection.typeId
             val genreOk = genreMatches(index, selection.genreMask, i)
-            val yearOk = selection.yearId == LibraryIndex.Selection.ANY || index.yearIds[i] == selection.yearId
+            val yearOk = selection.yearId == LibraryGridIndex.Selection.ANY || index.yearIds[i] == selection.yearId
             if (genreOk && yearOk) {
                 counts.type[tab]++
                 counts.typeTotal++
@@ -315,14 +315,14 @@ internal object LibraryIndexKernel {
         return count
     }
 
-    private fun inList(index: LibraryIndex, listId: Int, i: Int): Boolean {
-        if (listId == LibraryIndex.Selection.ANY) return true
-        if (listId == LibraryIndex.Selection.NONE) return false
+    private fun inList(index: LibraryGridIndex, listId: Int, i: Int): Boolean {
+        if (listId == LibraryGridIndex.Selection.ANY) return true
+        if (listId == LibraryGridIndex.Selection.NONE) return false
         for (k in index.listStart[i] until index.listStart[i + 1]) if (index.listIds[k] == listId) return true
         return false
     }
 
-    private fun genreMatches(index: LibraryIndex, mask: BooleanArray?, i: Int): Boolean {
+    private fun genreMatches(index: LibraryGridIndex, mask: BooleanArray?, i: Int): Boolean {
         if (mask == null) return true
         for (g in index.genreStart[i] until index.genreStart[i + 1]) if (mask[index.rawGenreIds[g]]) return true
         return false

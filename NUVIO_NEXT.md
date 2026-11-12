@@ -120,8 +120,8 @@ Evidence for every decision is in `docs/nuvio-next/PERFORMANCE.md`; the audit is
 | 2. Rust integration proof | Done (PR #1) | `rust/` workspace, JNI bridge `libnuvio_core.so` for 4 ABIs, 16 KB aligned; ABI handshake and Kotlin fallback. |
 | 5 (part). Release-name classification | Rust, debug builds only | 4.5–5.5× faster on the host; release builds stay on Kotlin until measured on devices. |
 | 3. Metadata core | Decided: Kotlin (PR #2) | Moshi decoding dominates; fixed a regex hot spot instead. |
-| 4. Search/filter core | Decided: Kotlin (Milestone 4) | Library grid query 19–300× faster via `LibraryIndex`; the Rust saving ceiling is ≤ 0.13 ms per query. |
-| 6. Library indexing | Done in Kotlin (Milestone 4) | `LibraryIndex` holds precomputed keys and cached sort orders per library snapshot, in memory only. |
+| 4. Search/filter core | Decided: Kotlin (Milestone 4) | Library grid query 19–300× faster via `LibraryGridIndex`; the Rust saving ceiling is ≤ 0.13 ms per query. |
+| 6. Library indexing | Done in Kotlin (Milestone 4) | `LibraryGridIndex` holds precomputed keys and cached sort orders per library snapshot, in memory only. |
 | 5. Provider result processing | Next | — |
 
 The owner's long-term direction (2026-11-12) is for Rust to become the primary engine for

@@ -206,7 +206,7 @@ Most of the app is network-bound; heavy home/continue-watching work already runs
 **Update (Milestone 4).** The library grid query (`LibraryViewModel.withVisibleItems`) was missing
 from this list. It turned out to be the largest CPU cost measured so far: 6–58 ms per filter or sort
 press for libraries of 2 000–10 000 entries, on the main thread. It is resolved in Kotlin by
-`LibraryIndex`. Rust was evaluated by ceiling analysis and rejected; see `PERFORMANCE.md` §Search and
+`LibraryGridIndex`. Rust was evaluated by ceiling analysis and rejected; see `PERFORMANCE.md` §Search and
 filter.
 
 ## 8. Performance baseline and benchmark plan

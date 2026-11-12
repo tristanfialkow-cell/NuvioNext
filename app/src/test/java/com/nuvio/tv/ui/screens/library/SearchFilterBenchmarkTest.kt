@@ -21,12 +21,12 @@ class SearchFilterBenchmarkTest {
         println("library_entries,scenario,reference_us,index_build_us,index_first_query_us,index_query_us,speedup")
         for (size in listOf(500, 2_000, 5_000, 10_000)) {
             val entries = LibraryFixtures.library(size, Random(size))
-            val index = LibraryIndex(entries)
+            val index = LibraryGridIndex(entries)
             for ((name, spec) in LibraryFixtures.scenarios()) {
                 val reference = measure { LibraryQueryEngine.query(entries, spec).items.size }
                 // Cold path a user hits after a library sync: build the index and run the first query.
-                val build = measure { LibraryIndex(entries).size }
-                val firstQuery = measure { LibraryIndex(entries).query(spec).items.size } - build
+                val build = measure { LibraryGridIndex(entries).size }
+                val firstQuery = measure { LibraryGridIndex(entries).query(spec).items.size } - build
                 val query = measure { index.query(spec).items.size }
                 println(
                     "%d,%s,%.1f,%.1f,%.1f,%.1f,%.1f".format(
@@ -42,17 +42,17 @@ class SearchFilterBenchmarkTest {
         // whatever executes the kernel, so the kernel time bounds what a native executor can save.
         println("library_entries,scenario,resolve_us,kernel_us,assemble_us")
         for (size in listOf(2_000, 10_000)) {
-            val index = LibraryIndex(LibraryFixtures.library(size, Random(size)))
+            val index = LibraryGridIndex(LibraryFixtures.library(size, Random(size)))
             for ((name, spec) in LibraryFixtures.scenarios().filter { it.first in setOf("default_local", "title_asc", "series_unwatched_released") }) {
                 index.query(spec)
                 val selection = index.resolve(spec)
                 val visible = IntArray(index.size)
                 var counts = LibraryFacetCounts(index)
-                var visibleCount = LibraryIndexKernel.run(index, selection, visible, counts)
+                var visibleCount = LibraryGridKernel.run(index, selection, visible, counts)
                 val resolve = measure { if (index.resolve(spec).listId == Int.MIN_VALUE) 0 else 1 }
                 val kernel = measure {
                     counts = LibraryFacetCounts(index)
-                    visibleCount = LibraryIndexKernel.run(index, selection, visible, counts)
+                    visibleCount = LibraryGridKernel.run(index, selection, visible, counts)
                     visibleCount
                 }
                 val assemble = measure { index.assemble(selection, visible, visibleCount, counts).items.size }
