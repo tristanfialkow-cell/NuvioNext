@@ -67,6 +67,12 @@ class ProviderProcessingBenchmarkTest {
                 val facts = ReleaseFactsClassifier.classifyAll(streams)
                 val withFacts = DirectDebridStreamFilter.applyPreferencesWithFacts(streams, settings)
                 check(facts.size == size)
+                // Guard against timing a no-op: every stream must survive presentation and be formatted.
+                ReleaseFactsClassifier.nativeEnabled = false
+                val presented = presentation.apply(group, settings, includeBadgeMatches = false).single().streams
+                check(withFacts.size == size && presented.size == size) {
+                    "presentation dropped streams: kept ${withFacts.size}/${presented.size} of $size"
+                }
 
                 fun row(stage: String, block: () -> Int) {
                     val s = measure(block)
@@ -168,7 +174,14 @@ object ProviderStreamFixtures {
                     )
                 )
             )
-        ).copy(infoHash = "%040x".format(index), addonName = "Torrentio")
+        ).let { stream ->
+            // TorBox: the resolver the benchmark settings make active, so presentation keeps the streams.
+            stream.copy(
+                infoHash = "%040x".format(index),
+                addonName = "Torrentio",
+                clientResolve = stream.clientResolve?.copy(service = "torbox")
+            )
+        }
     }
 
     /** Inverse of `ReleaseFactsParityTest.streamFrom` for the fields classification reads. */

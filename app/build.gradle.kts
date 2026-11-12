@@ -471,6 +471,10 @@ tasks.withType<Test>().configureEach {
     listOf("nuvio.updateFixtures", "nuvio.bench").forEach { key ->
         providers.gradleProperty(key).orNull?.let { systemProperty(key, it) }
     }
+    // -Pnuvio.jfr=<file>: record a Java Flight Recorder CPU profile of the test JVM (profiling benchmarks).
+    providers.gradleProperty("nuvio.jfr").orNull?.let { file ->
+        jvmArgs("-XX:StartFlightRecording=filename=$file,settings=profile,dumponexit=true")
+    }
     if (rustCoreEnabled) {
         dependsOn(buildRustCoreHost)
         systemProperty("nuvio.core.hostLib", rustHostLibrary.asFile.absolutePath)
