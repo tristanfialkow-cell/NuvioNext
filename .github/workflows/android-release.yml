@@ -177,6 +177,14 @@ jobs:
         if: inputs.mode != 'dry-run'
         uses: gradle/actions/setup-gradle@v6
 
+      # Rust core (rust/): toolchain and targets come from rust/rust-toolchain.toml.
+      - name: Install cargo-ndk and test Rust core
+        if: inputs.mode != 'dry-run'
+        working-directory: rust
+        run: |
+          command -v cargo-ndk || cargo install cargo-ndk --version 4.1.2 --locked
+          cargo test --workspace --locked
+
       - name: Configure release properties
         if: inputs.mode != 'dry-run'
         run: |

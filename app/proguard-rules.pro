@@ -80,6 +80,11 @@
 -keep interface com.google.android.exoplayer2.** { *; }
 -keep class com.google.android.exoplayer2.ext.** { *; }
 
+# Rust core JNI (rust/nuvio-core-jni): exported symbol names depend on this class and its methods.
+-keep class com.nuvio.tv.core.nativecore.NuvioCoreNative {
+    native <methods>;
+}
+
 # Keep native interfaces and handles for Nuvio Engine JNI
 -keep class androidx.media3.exoplayer.upstream.DefaultAllocatorNative {
     native <methods>;
