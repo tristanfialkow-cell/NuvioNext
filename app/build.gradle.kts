@@ -173,8 +173,11 @@ val releaseStorePasswordValue = env("NUVIO_RELEASE_STORE_PASSWORD")
 // Rust core (rust/, see docs/nuvio-next/RUST_INTEGRATION.md). Build without a Rust toolchain with
 // -Pnuvio.rustCore=false; the app then uses its Kotlin implementations.
 val rustCoreEnabled = providers.gradleProperty("nuvio.rustCore").orNull?.let(::parseBooleanProperty) ?: true
-// Routes release-name classification through Rust (Kotlin stays the fallback). Off until measured on devices.
-val rustReleaseFactsEnabled = parseBooleanProperty(providers.gradleProperty("nuvio.rustReleaseFacts").orNull)
+// Routes release-name classification through Rust (Kotlin stays the fallback). Unset: on for debug builds
+// (device dogfooding), off for release/benchmark until measured on TV hardware. Set to force either way.
+val rustReleaseFactsProperty = providers.gradleProperty("nuvio.rustReleaseFacts").orNull
+val rustReleaseFactsEnabled = parseBooleanProperty(rustReleaseFactsProperty)
+val rustReleaseFactsDebugEnabled = rustReleaseFactsProperty?.let(::parseBooleanProperty) ?: true
 val rustAbis = listOf("armeabi-v7a", "arm64-v8a", "x86", "x86_64")
 val cargoExecutable = env("CARGO")
     ?: File(System.getProperty("user.home"), ".cargo/bin/cargo").takeIf { it.canExecute() }?.absolutePath
@@ -211,7 +214,7 @@ android {
         buildConfigField("String", "DEVICE_LOGIN_WEB_BASE_URL", "\"${localProperties.getProperty("DEVICE_LOGIN_WEB_BASE_URL", "https://nuvio.tv/link")}\"")
         buildConfigField("boolean", "DOVI_NATIVE_ENABLED", enableDoviNative.toString())
         buildConfigField("boolean", "DOVI_EXTRACTOR_HOOK_READY", doviExtractorHookReady.toString())
-        buildConfigField("boolean", "RUST_RELEASE_FACTS_ENABLED", rustReleaseFactsEnabled.toString())
+        buildConfigField("boolean", "RUST_RELEASE_FACTS_ENABLED", (rustCoreEnabled && rustReleaseFactsEnabled).toString())
         if (enableDoviNative) {
             externalNativeBuild {
                 cmake {
@@ -286,6 +289,7 @@ android {
 
             buildConfigField("boolean", "IS_DEBUG_BUILD", "true")
             buildConfigField("String", "SENTRY_ENVIRONMENT", buildConfigString("debug"))
+            buildConfigField("boolean", "RUST_RELEASE_FACTS_ENABLED", (rustCoreEnabled && rustReleaseFactsDebugEnabled).toString())
 
             // Dev environment (from local.dev.properties)
             buildConfigField("String", "SUPABASE_URL", buildConfigString(resolveProperty(devProperties, localProperties, "NUVIO_SUPABASE_URL")))
