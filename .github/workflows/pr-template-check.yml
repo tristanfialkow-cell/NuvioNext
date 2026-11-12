@@ -48,7 +48,12 @@ jobs:
             }
 
             function hasIssueReference(content) {
-              return /(^|\s)(#\d+|https:\/\/github\.com\/\S+\/issues\/\d+)/i.test(content || "");
+              if (/(^|\s)(#\d+|https:\/\/github\.com\/\S+\/issues\/\d+)/i.test(content || "")) return true;
+              // Forks with issues disabled cannot link an issue; accept a link to an approval document in this repository.
+              const repo = context.payload.repository || {};
+              if (repo.has_issues !== false || !repo.full_name) return false;
+              const escapedRepo = repo.full_name.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+              return new RegExp(`(^|\\s)https://github\\.com/${escapedRepo}/blob/\\S+\\.md\\b`, "i").test(content || "");
             }
 
             const required = [
